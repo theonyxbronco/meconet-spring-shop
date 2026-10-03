@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* Brand — derived from the Figma mockups. Swap these to re-skin everything. */
+  --color-navy-900: #0a2c57;
+  --color-navy-800: #0f3a6d;
+  --color-navy-700: #16487f;
+  --color-ink: #0b2e5e;
+  --color-ink-soft: #37557f;
+
+  --color-brand-50: #eaf3fd;
+  --color-brand-100: #d3e6fb;
+  --color-brand-400: #4a9cf4;
+  --color-brand-500: #1f85f0;
+  --color-brand-600: #0e6fd6;
+
+  --color-page: #f6fafe;
+  --color-surface: #ffffff;
+  --color-line: #e2ebf4;
+  --color-line-strong: #cadbec;
+  --color-muted: #6b7c93;
+
+  --color-stock: #15a44c;
+  --color-stock-bg: #e7f7ee;
+
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-card: 14px;
+  --shadow-card: 0 1px 2px rgba(11, 46, 94, 0.04), 0 8px 24px rgba(11, 46, 94, 0.06);
+  --shadow-pop: 0 12px 40px rgba(11, 46, 94, 0.16);
+}
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  background: var(--color-page);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+/* The hero band in both mockups: pale blue wash fading to the page colour. */
+.hero-wash {
+  background:
+    radial-gradient(120% 140% at 88% 10%, #cfe4fa 0%, rgba(207, 228, 250, 0) 58%),
+    linear-gradient(180deg, #e3f0fc 0%, #f1f7fd 70%, var(--color-page) 100%);
+}
+
+.focus-ring {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Horizontal carousels: hide the bar, keep the scroll. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-rise {
+  animation: rise 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
