@@ -8,6 +8,18 @@ import type { SpringComponent, SpringType } from "@/data/types";
  * table. Without it the hooks or legs would silently add to the stated size.
  */
 
+/**
+ * The angle between a torsion spring's legs, unloaded — `θ` on the drawing sheet.
+ *
+ * It is carried in the end description ("90° straight legs"), so read it back from
+ * there rather than storing the same fact twice. Returns undefined for ends that do
+ * not state an angle, such as tangential legs.
+ */
+export const legAngle = (endType: string): number | undefined => {
+  const match = endType.match(/(\d+)\s*°/);
+  return match ? Number(match[1]) : undefined;
+};
+
 /** How far one hook projects beyond the coil body, in mm. */
 export const hookProjection = (outerDiameter: number, wireDiameter: number) =>
   wireDiameter * 1.2 + 0.85 * (outerDiameter - wireDiameter);

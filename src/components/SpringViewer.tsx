@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Line, OrbitControls } from "@react-three/drei";
+import { ContactShadows, Line, OrbitControls } from "@react-three/drei";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
@@ -15,6 +15,18 @@ const FIT_SIZE = 1.95;
 const GRID_MM = 5;
 const GROUP_Y = 0.22;
 const ACCENT = "#0e6fd6";
+
+/**
+ * The viewer is lit and framed to match the catalogue photography: a bright,
+ * near-white sweep, polished steel, and a soft contact shadow under the part.
+ * The camera opens on the same raised three-quarter angle the photographs were
+ * shot from, so switching between the 3D and Photo tabs is a change of medium
+ * rather than a change of subject.
+ */
+const BACKDROP = "#fbfcfd";
+const CAMERA_POSITION: [number, number, number] = [3.15, 1.95, 4.3];
+/** Floor height relative to the part, where the contact shadow and grid sit. */
+const FLOOR_GAP = 0.42;
 
 type LabelKey = "length" | "diameter" | "wire";
 type Anchors = Record<LabelKey, [number, number, number]>;
@@ -148,7 +160,7 @@ function SpringMesh({ spring, unit }: { spring: SpringComponent; unit: number })
         color={appearance.color}
         metalness={appearance.metalness}
         roughness={appearance.roughness}
-        envMapIntensity={1.15}
+        envMapIntensity={appearance.envMapIntensity}
       />
     </mesh>
   );
@@ -178,21 +190,38 @@ function Scene({
   const cell = GRID_MM * unit;
   const divisions = Math.max(Math.ceil((size.x * unit) / cell) + 4, 4);
 
+  const floorY = GROUP_Y - radius - FLOOR_GAP;
+
   return (
     <>
+      <color attach="background" args={[BACKDROP]} />
       <StudioEnvironment />
-      <ambientLight intensity={0.35} />
-      <directionalLight position={[4, 6, 5]} intensity={1.5} />
-      <directionalLight position={[-5, -2, -4]} intensity={0.5} />
+      <ambientLight intensity={0.5} />
+      {/* Key light high and to the right, as in the photographs. */}
+      <directionalLight position={[4, 6, 5]} intensity={1.9} />
+      {/* Fill from the opposite side, so the shadowed flank still reads as metal. */}
+      <directionalLight position={[-5, 1, -4]} intensity={0.75} />
+      {/* Rim along the top edge, which is what makes polished wire look polished. */}
+      <directionalLight position={[0, 5, -6]} intensity={0.6} />
 
       <group position={[0, GROUP_Y, 0]}>
         <SpringMesh spring={spring} unit={unit} />
         <DimensionLines spring={spring} unit={unit} visible={showDimensions} />
       </group>
 
+      <ContactShadows
+        position={[0, floorY, 0]}
+        scale={Math.max(divisions * cell, 6)}
+        opacity={0.42}
+        blur={2.4}
+        far={2.6}
+        resolution={1024}
+        color="#1d2c3d"
+      />
+
       <gridHelper
         args={[divisions * cell, divisions, "#9bb6d2", "#d7e4f0"]}
-        position={[0, GROUP_Y - radius - 0.5, 0]}
+        position={[0, floorY + 0.002, 0]}
         visible={showGrid}
       />
 
@@ -249,7 +278,7 @@ export default function SpringViewer({ spring }: { spring: SpringComponent }) {
   return (
     <div className="relative h-full w-full">
       <Canvas
-        camera={{ position: [0, 0.95, 5.1], fov: 34 }}
+        camera={{ position: CAMERA_POSITION, fov: 32 }}
         dpr={[1, 2]}
         gl={{ antialias: true }}
         onPointerDown={() => setAutoRotate(false)}

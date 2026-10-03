@@ -2,16 +2,30 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { KitBoxArt, SpringArt } from "@/assets/brand";
+import { KitBoxArt, SpringPhoto } from "@/assets/brand";
 import type { Kit, SpringComponent } from "@/data/types";
 import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, ZoomIcon } from "./icons";
 
 type Slide = { key: string; label: string; spring?: SpringComponent };
 
+/**
+ * One spring per type, so the strip advertises the spread of the kit rather than
+ * three near-identical compression springs off the top of the list.
+ */
+function featured(kit: Kit): SpringComponent[] {
+  const seen = new Set<SpringComponent["type"]>();
+  const pick = kit.components.filter((spring) => {
+    if (seen.has(spring.type)) return false;
+    seen.add(spring.type);
+    return true;
+  });
+  return pick.slice(0, 3);
+}
+
 export function KitGallery({ kit }: { kit: Kit }) {
   const slides: Slide[] = [
     { key: "box", label: `${kit.name} assortment box` },
-    ...kit.components.slice(0, 3).map((spring) => ({
+    ...featured(kit).map((spring) => ({
       key: spring.id,
       label: `${spring.name}, ${spring.code}`,
       spring,
@@ -27,7 +41,7 @@ export function KitGallery({ kit }: { kit: Kit }) {
 
   const render = (slide: Slide, className: string) =>
     slide.spring ? (
-      <SpringArt spring={slide.spring} className={className} />
+      <SpringPhoto spring={slide.spring} className={className} />
     ) : (
       <KitBoxArt kit={kit} className={className} />
     );

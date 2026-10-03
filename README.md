@@ -28,11 +28,13 @@ Exactly one component is flagged as the spring a participant is handed physicall
 | | Kit | Spring |
 |---|---|---|
 | **target** | Garage Kit | extension, Ø10.0 × 70 mm, wire 1.20 |
-| near-miss | Workshop Maintenance | extension, Ø10.0 × 65 mm, wire 1.20 |
-| near-miss | Trampoline & Outdoor | extension, Ø12.0 × 70 mm, wire 1.40 |
+| near-miss | Mechatro Kit | extension, Ø10.0 × 65 mm, wire 1.20 |
+| near-miss | Trampoline Kit | extension, Ø12.0 × 70 mm, wire 1.40 |
 
 The near-misses are deliberate: a participant cannot pass the task on a glance at a
-thumbnail, they have to read dimensions or compare the part.
+thumbnail, they have to read dimensions or compare the part. The Mechatro near-miss is
+plated steel rather than stainless like the rest of its kit, so the material column
+cannot give the answer away before the dimensions are compared.
 
 To retarget the test, edit the flagged component in `src/data/kits.ts` and set
 `target: true` on whichever spring matches the real part you hand out. The product
@@ -102,13 +104,41 @@ spring's own arithmetic worked through, and **How to identify this spring** is a
 caliper-and-ruler checklist for telling it apart from a near-miss. Both are generated,
 so they cannot drift from the numbers above them.
 
-## Swapping in real assets
+## Imagery
 
-All generated imagery lives in `src/assets/brand.tsx`:
+Every image is resolved in `src/assets/brand.tsx`, so artwork is swapped in one file:
 
-- `Wordmark` — replace the text with the real meconet logo.
-- `KitBoxArt` — replace the generated tray with kit photography.
-- `SpringArt` — leave it; it is generated from each spring's own dimensions.
+- `Wordmark` — still text; replace it with the real meconet logo.
+- `KitBoxArt` — the kit's printed lid label, from `public/kit-covers`. Each kit names
+  its own file through `coverImage` in `src/data/kits.ts`.
+- `SpringPhoto` — a component's studio photograph, where `kits.ts` gives it a `photo`.
+  Falls back to `SpringArt` when it does not.
+- `SpringArt` — generated from each spring's own dimensions. Leave it: it is the only
+  art drawn to scale, which is why the actual-size overlay may use nothing else.
+
+Photography is deliberately partial. The **Mechatro Kit** is the kit shown in moderated
+sessions, so it is the only one dressed with real photographs and real drawing sheets
+(`public/springs`); every other kit renders from the generated artwork, which is derived
+from the same dimensions and so is never wrong, only plainer.
+
+A component's `drawings` are orthographic sheets. When a component has them, the Drawing
+view and the **Technical drawing** panel show those instead of the generated SVG, with a
+thumbnail strip to step between sheets. The sheets are annotated `d`, `Do`, `Di`, `L0`,
+`p` — and `L1`, `L2`, `θ` for a torsion spring — which are exactly the symbols in the
+Ref. column of the specification table, so a dimension read off the sheet can be looked
+up directly.
+
+The Mechatro Kit's dimensions are not invented: outside diameter, free length, wire
+gauge and coil count were measured off its photographs, so the generated 3D model and
+the photograph of the same component show a spring of the same proportions. The one
+exception is the Ø10 × 65 near-miss, whose dimensions are fixed by the test design —
+its photograph was chosen for having open machine-hook ends to match, and it reads a
+little shorter than the model.
+
+Coil count is what makes a spring look tight or stretched, and it is easy to get wrong
+by eye: a compression spring's pitch should land near 1.8 × its wire gauge (2.2 × the
+section height for a die spring), and an extension spring's coils should touch. If you
+add a component, check it against that before trusting how it looks.
 
 For real CAD, set `modelUrl` on a component in `src/data/kits.ts` and load it in
 `SpringViewer` instead of the generated geometry.

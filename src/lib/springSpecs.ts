@@ -1,5 +1,5 @@
 import type { SpringComponent } from "@/data/types";
-import { springMetrics } from "./springMetrics";
+import { legAngle, springMetrics } from "./springMetrics";
 import {
   activeCoils,
   dieLoadClass,
@@ -129,6 +129,14 @@ const diameterRows = (spring: SpringComponent): SpecAttribute[] => {
   ];
 };
 
+/** Axial rise per turn — `p` on the drawing sheet. */
+const pitchRow = (spring: SpringComponent): SpecAttribute => ({
+  label: "Pitch",
+  ref: "p",
+  value: fmt(springMetrics(spring).pitch, 2),
+  unit: "mm",
+});
+
 const coilRows = (spring: SpringComponent): SpecAttribute[] => [
   {
     label: "Active coils",
@@ -151,6 +159,7 @@ export function specAttributes(spring: SpringComponent): SpecAttribute[] {
       { label: "Wire diameter", ref: "d", value: fmt(spring.wireDiameter, 2), unit: "mm" },
       { label: "Free length over hooks", ref: "L0", value: fmt(spring.freeLength), unit: "mm" },
       { label: "Body length", ref: "Lk", value: fmt(metrics.bodyLength), unit: "mm" },
+      pitchRow(spring),
       rate,
       ...diameterRows(spring),
       ...coilRows(spring),
@@ -164,9 +173,18 @@ export function specAttributes(spring: SpringComponent): SpecAttribute[] {
 
   if (spring.type === "torsion") {
     const mandrel = innerDiameter(spring.outerDiameter, spring.wireDiameter) * 0.9;
+    const angle = legAngle(spring.endType);
     return [
       { label: "Wire diameter", ref: "d", value: fmt(spring.wireDiameter, 2), unit: "mm" },
-      { label: "Leg length", ref: "a", value: fmt(spring.freeLength), unit: "mm" },
+      // Both legs are drawn to the same length, so one figure covers L1 and L2.
+      { label: "Leg length, each", ref: "L1 = L2", value: fmt(spring.freeLength), unit: "mm" },
+      {
+        label: "Angle between legs, unloaded",
+        ref: "θ",
+        ...(angle === undefined
+          ? { value: "Tangential" }
+          : { value: fmt(angle, 0), unit: "°" }),
+      },
       { label: "Body length", ref: "Lk", value: fmt(metrics.bodyLength), unit: "mm" },
       rate,
       ...diameterRows(spring),
@@ -215,6 +233,7 @@ export function specAttributes(spring: SpringComponent): SpecAttribute[] {
         }
       : { label: "Wire diameter", ref: "d", value: fmt(spring.wireDiameter, 2), unit: "mm" },
     { label: "Free length", ref: "L0", value: fmt(spring.freeLength), unit: "mm" },
+    pitchRow(spring),
     rate,
     ...diameterRows(spring),
     ...coilRows(spring),

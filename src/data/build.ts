@@ -69,6 +69,10 @@ export interface SpecInput {
   /** Overrides the calculated working load, for sections the formulas don't cover. */
   load?: [number, number];
   target?: boolean;
+  /** Studio photograph, relative to `public`. */
+  photo?: string;
+  /** Orthographic drawing sheets, relative to `public`, most representative first. */
+  drawings?: string[];
 }
 
 /** Derives code, spring rate and working load from the geometry, so specs stay self-consistent. */
@@ -137,6 +141,8 @@ export function buildComponent(spec: SpecInput): SpringComponent {
     sizeBand: sizeBandFor(spec.len),
     action: ACTION_BY_TYPE[spec.type],
     isTestTarget: spec.target,
+    photoUrl: spec.photo,
+    drawings: spec.drawings,
   };
 }
 

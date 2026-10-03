@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import type { SpringComponent } from "@/data/types";
-import { springMetrics } from "./springMetrics";
+import { legAngle, springMetrics } from "./springMetrics";
 
 /**
  * Builds true-to-dimension spring geometry from catalogue specs.
@@ -29,6 +29,24 @@ function hookOutline(radius: number, wire: number, sweepTurns: number) {
   return points;
 }
 
+/**
+ * How far round the body is wound, in turns.
+ *
+ * A torsion spring's legs leave the wire at its two ends, so the angle between
+ * them is whatever the body happens to sweep. Winding whole coils puts both legs
+ * on top of each other; adding the part turn the end description calls for lands
+ * them at the stated angle instead — 0.25 of a turn for 90° legs, 0.75 for 270°.
+ *
+ * The body is scaled back to `bodyLength` afterwards, so this changes where the
+ * legs point without changing any dimension the spec table prints.
+ */
+function sweepTurns(spring: SpringComponent) {
+  if (spring.type !== "torsion") return spring.coils;
+  const angle = legAngle(spring.endType);
+  if (angle === undefined) return spring.coils;
+  return Math.floor(spring.coils) + (((angle % 360) + 360) % 360) / 360;
+}
+
 function helixPoints(spring: SpringComponent) {
   const wire = spring.wireDiameter;
   const radius = (spring.outerDiameter - wire) / 2;
@@ -36,16 +54,17 @@ function helixPoints(spring: SpringComponent) {
   const points: THREE.Vector3[] = [];
 
   const openWound = spring.type === "compression" || spring.type === "die";
-  const steps = Math.round(spring.coils * SAMPLES_PER_TURN);
+  const turns = sweepTurns(spring);
+  const steps = Math.round(turns * SAMPLES_PER_TURN);
 
   // Compression and die springs close their end coils, so only the active turns
   // carry the pitch. Extension and torsion springs are wound evenly throughout.
   const pitchAt = (turn: number) =>
-    openWound && (turn < 1 || turn > spring.coils - 1) ? wire : metrics.pitch;
+    openWound && (turn < 1 || turn > turns - 1) ? wire : metrics.pitch;
 
   let x = 0;
   for (let i = 0; i <= steps; i += 1) {
-    const turn = (i / steps) * spring.coils;
+    const turn = (i / steps) * turns;
     const angle = turn * Math.PI * 2;
     points.push(new THREE.Vector3(x, Math.cos(angle) * radius, Math.sin(angle) * radius));
     x += pitchAt(turn) / SAMPLES_PER_TURN;
@@ -156,12 +175,21 @@ export function buildSpringGeometry(spring: SpringComponent): BuiltGeometry {
   return { geometry, size, centre };
 }
 
-/** Plated steel reads darker and warmer; stainless reads brighter and cooler. */
+/**
+ * Surface finish, matched to the catalogue photography.
+ *
+ * Both grades are shot as bright polished metal, so neither is allowed to go
+ * muddy: the difference is that stainless is near-white and almost mirror-like,
+ * while zinc-plated steel keeps a slightly darker, cooler cast and a touch more
+ * roughness. Low roughness is what makes the wire pick up the studio reflections
+ * and read as metal rather than as grey plastic.
+ */
 export function springAppearance(spring: SpringComponent) {
   const stainless = spring.material.includes("10270-3");
   return {
-    color: stainless ? "#c9d2da" : "#4a525c",
-    metalness: 0.92,
-    roughness: stainless ? 0.22 : 0.34,
+    color: stainless ? "#e3e8ec" : "#aab3bd",
+    metalness: 1,
+    roughness: stainless ? 0.13 : 0.2,
+    envMapIntensity: stainless ? 1.45 : 1.3,
   };
 }

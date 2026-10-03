@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { SpringArt } from "@/assets/brand";
+import { SpringPhoto } from "@/assets/brand";
 import { LENGTH_LABEL } from "@/lib/springMetrics";
 import { SPRING_TYPE_LABEL, type SpringComponent } from "@/data/types";
 import { ChevronLeftIcon, ChevronRightIcon } from "./icons";
@@ -97,7 +97,7 @@ export function ComponentCarousel({
                 >
                   {component.isTestTarget && <span className="sr-only">Reference component</span>}
                   <div className="flex h-[104px] items-center justify-center">
-                    <SpringArt spring={component} className="h-full w-full" />
+                    <SpringPhoto spring={component} className="h-full w-full" sizes="188px" />
                   </div>
                   <p className="mt-3 text-[12px] text-muted">Product code:</p>
                   <p className="text-[13.5px] font-bold leading-snug text-ink">{component.code}</p>

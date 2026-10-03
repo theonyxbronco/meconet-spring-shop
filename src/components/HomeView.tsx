@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { kits } from "@/data/kits";
 import { SPRING_TYPE_LABEL, type SpringType } from "@/data/types";
@@ -313,13 +314,13 @@ export function HomeView() {
             )}
           </div>
 
-          {/* Decorative coil, generated rather than photographed */}
+          {/* The range, shown as it arrives: six labelled boxes */}
           <div
             aria-hidden
             className="pointer-events-none absolute right-0 top-0 hidden h-full w-[42%] items-center justify-center lg:flex"
           >
             <div className="absolute right-8 top-6 h-[78%] w-[76%] rotate-[8deg] rounded-[28px] bg-gradient-to-br from-white/70 to-brand-100/40" />
-            <HeroCoil />
+            <HeroKits />
           </div>
         </div>
       </section>
@@ -429,63 +430,18 @@ function StarterGroup({
   );
 }
 
-/** Generated stand-in for the hero photograph: a helix drawn in projection. */
-function HeroCoil() {
-  const turns = 5;
-  const radius = 78;
-  // Axis of the coil, running up and to the right like the mockup.
-  const from = { x: 76, y: 236 };
-  const to = { x: 404, y: 112 };
-  const dx = to.x - from.x;
-  const dy = to.y - from.y;
-  const length = Math.hypot(dx, dy);
-  const axis = { x: dx / length, y: dy / length };
-  const perp = { x: -axis.y, y: axis.x };
-  const pitch = length / turns;
-  // A circular section seen at an angle projects to a foreshortened ellipse.
-  const depth = 0.32;
-
-  const samples = turns * 72;
-  const points: string[] = [];
-  for (let i = 0; i <= samples; i += 1) {
-    const t = (i / samples) * turns * Math.PI * 2;
-    const along = (t / (Math.PI * 2)) * pitch + radius * depth * Math.sin(t);
-    const across = radius * Math.cos(t);
-    const x = from.x + axis.x * along + perp.x * across;
-    const y = from.y + axis.y * along + perp.y * across;
-    points.push(`${i === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`);
-  }
-
+/** The range shot: all six assortments, which is what the hero is actually selling. */
+function HeroKits() {
   return (
-    <svg viewBox="0 0 470 330" className="relative h-[92%] w-[92%]" aria-hidden>
-      <defs>
-        <linearGradient
-          id="hero-steel"
-          gradientUnits="userSpaceOnUse"
-          x1={from.x - perp.x * radius}
-          y1={from.y - perp.y * radius}
-          x2={from.x + perp.x * radius}
-          y2={from.y + perp.y * radius}
-        >
-          <stop offset="0%" stopColor="#223044" />
-          <stop offset="22%" stopColor="#8fa6bd" />
-          <stop offset="42%" stopColor="#f2f7fc" />
-          <stop offset="62%" stopColor="#6e8299" />
-          <stop offset="84%" stopColor="#2b3a4d" />
-          <stop offset="100%" stopColor="#141d28" />
-        </linearGradient>
-        <filter id="hero-shadow" x="-25%" y="-25%" width="150%" height="150%">
-          <feDropShadow dx="2" dy="10" stdDeviation="9" floodColor="#0b2e5e" floodOpacity="0.24" />
-        </filter>
-      </defs>
-      <path
-        d={points.join(" ")}
-        fill="none"
-        stroke="url(#hero-steel)"
-        strokeWidth="27"
-        strokeLinecap="round"
-        filter="url(#hero-shadow)"
+    <div className="relative h-[86%] w-[94%]">
+      <Image
+        src="/kit-covers/all-kits.png"
+        alt="The six Meconet spring assortments"
+        fill
+        sizes="44vw"
+        preload
+        className="object-contain drop-shadow-[0_18px_44px_rgba(11,46,94,0.18)]"
       />
-    </svg>
+    </div>
   );
 }

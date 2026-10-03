@@ -45,6 +45,13 @@ export interface SpringComponent {
   isTestTarget?: boolean;
   /** Drop in a .glb path here and the viewer loads it instead of generating geometry. */
   modelUrl?: string;
+  /** Studio photograph of the real part, shown in place of the generated illustration. */
+  photoUrl?: string;
+  /**
+   * Orthographic drawing sheets for this part, most representative first. When a
+   * component has these, the Drawing view shows them instead of the generated SVG.
+   */
+  drawings?: string[];
 }
 
 export interface KitProfile {
@@ -58,6 +65,8 @@ export interface KitProfile {
 export interface Kit {
   slug: string;
   name: string;
+  /** Lid label artwork, served from `public/kit-covers`. */
+  coverImage: string;
   partNumber: string;
   shortText: string;
   description: string;

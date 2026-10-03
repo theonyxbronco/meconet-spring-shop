@@ -1,9 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { SpringArt } from "@/assets/brand";
+import { SpringPhoto } from "@/assets/brand";
 import { TechnicalDrawing } from "./TechnicalDrawing";
 import { ActualSizeOverlay } from "./ActualSizeOverlay";
 import { identificationSteps, specAttributes, springNotes } from "@/lib/springSpecs";
@@ -25,13 +26,21 @@ const SpringViewer = dynamic(() => import("./SpringViewer"), {
 });
 
 type Panel = "specifications" | "drawing" | "notes" | "identify" | "files";
-type Mode = "image" | "drawing" | "3d";
+type Mode = "3d" | "image" | "drawing";
 
 export function ComponentDetail({ spring }: { spring: SpringComponent }) {
-  const [mode, setMode] = useState<Mode>("image");
+  // The 3D model is the view the shop leads with: it is the only one a customer can
+  // turn over, and it is generated from the same numbers as the table beside it.
+  const [mode, setMode] = useState<Mode>("3d");
   const [actualSize, setActualSize] = useState(false);
   const [open, setOpen] = useState<Panel | null>("specifications");
   const [note, setNote] = useState<string | null>(null);
+  const [sheet, setSheet] = useState(0);
+
+  const sheets = spring.drawings ?? [];
+
+  // A different component may have fewer sheets than the one just shown.
+  useEffect(() => setSheet(0), [spring.id]);
 
   const toggle = (panel: Panel) => setOpen((current) => (current === panel ? null : panel));
 
@@ -47,27 +56,25 @@ export function ComponentDetail({ spring }: { spring: SpringComponent }) {
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="lg:sticky lg:top-6 lg:self-start">
           <div className="relative h-[420px] overflow-hidden rounded-xl border border-line bg-surface">
-            {mode === "image" ? (
+            {mode === "3d" ? (
+              <SpringViewer spring={spring} />
+            ) : mode === "image" ? (
               <div className="flex h-full items-center justify-center p-10">
-                <SpringArt spring={spring} className="h-full w-full" />
-              </div>
-            ) : mode === "drawing" ? (
-              <div className="flex h-full items-center justify-center p-4">
-                <TechnicalDrawing spring={spring} />
+                <SpringPhoto spring={spring} className="h-full w-full" />
               </div>
             ) : (
-              <SpringViewer spring={spring} />
+              <DrawingPane spring={spring} sheets={sheets} sheet={sheet} onPickSheet={setSheet} />
             )}
 
             <div className="absolute right-4 top-4 flex gap-1.5 rounded-full border border-line bg-surface/92 p-1 shadow-card backdrop-blur">
+              <ModeButton active={mode === "3d"} onClick={() => setMode("3d")} label="3D">
+                <CubeIcon width={16} height={16} />
+              </ModeButton>
               <ModeButton active={mode === "image"} onClick={() => setMode("image")} label="Photo">
                 <ImageIcon width={16} height={16} />
               </ModeButton>
               <ModeButton active={mode === "drawing"} onClick={() => setMode("drawing")} label="Drawing">
                 <DrawingIcon width={16} height={16} />
-              </ModeButton>
-              <ModeButton active={mode === "3d"} onClick={() => setMode("3d")} label="3D">
-                <CubeIcon width={16} height={16} />
               </ModeButton>
             </div>
           </div>
@@ -135,9 +142,18 @@ export function ComponentDetail({ spring }: { spring: SpringComponent }) {
               open={open === "drawing"}
               onToggle={() => toggle("drawing")}
             >
-              <div className="rounded-lg border border-line bg-page p-3">
-                <TechnicalDrawing spring={spring} />
+              <div className="rounded-lg border border-line bg-white p-3">
+                {sheets.length > 0 ? (
+                  <SheetImage spring={spring} src={sheets[0]} className="h-[230px]" sizes="620px" />
+                ) : (
+                  <TechnicalDrawing spring={spring} />
+                )}
               </div>
+              <p className="mt-3 text-[13px] text-muted">
+                The symbols on the sheet — <SheetSymbols spring={spring} /> — are the same ones
+                in the Ref. column of the specification table above, so a dimension you read off
+                the drawing can be looked up directly.
+              </p>
               <button
                 onClick={() => setMode("drawing")}
                 className="mt-3 text-[14px] font-semibold text-brand-600 underline decoration-brand-100 decoration-2 underline-offset-4 hover:decoration-brand-400"
@@ -223,6 +239,126 @@ export function ComponentDetail({ spring }: { spring: SpringComponent }) {
         )}
       </AnimatePresence>
     </section>
+  );
+}
+
+/** One drawing sheet, letterboxed on white the way a PDF sheet would be. */
+function SheetImage({
+  spring,
+  src,
+  className = "",
+  sizes,
+}: {
+  spring: SpringComponent;
+  src: string;
+  className?: string;
+  sizes: string;
+}) {
+  return (
+    <div className={`relative w-full ${className}`}>
+      <Image
+        src={src}
+        alt={`Dimensioned drawing of ${spring.name}, ${spring.code}`}
+        fill
+        sizes={sizes}
+        className="object-contain"
+      />
+    </div>
+  );
+}
+
+/**
+ * The Drawing view.
+ *
+ * A component with real drawing sheets shows those, with a thumbnail strip when
+ * there is more than one — the sheets differ in which views they carry, not in
+ * which spring they show. Everything else falls back to the drawing generated
+ * from the component's own dimensions.
+ */
+function DrawingPane({
+  spring,
+  sheets,
+  sheet,
+  onPickSheet,
+}: {
+  spring: SpringComponent;
+  sheets: string[];
+  sheet: number;
+  onPickSheet: (index: number) => void;
+}) {
+  if (sheets.length === 0) {
+    return (
+      <div className="flex h-full items-center justify-center p-4">
+        <TechnicalDrawing spring={spring} />
+      </div>
+    );
+  }
+
+  const current = sheets[Math.min(sheet, sheets.length - 1)];
+
+  return (
+    <div className="flex h-full flex-col bg-white">
+      <div className="relative flex-1 p-5">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={current}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="absolute inset-5"
+          >
+            <Image
+              src={current}
+              alt={`Dimensioned drawing of ${spring.name}, ${spring.code}`}
+              fill
+              sizes="(max-width: 1024px) 90vw, 620px"
+              className="object-contain"
+            />
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {sheets.length > 1 && (
+        <div className="flex shrink-0 gap-2 border-t border-line bg-page px-4 py-3">
+          {sheets.map((src, index) => (
+            <button
+              key={src}
+              onClick={() => onPickSheet(index)}
+              aria-label={`Show drawing sheet ${index + 1} of ${sheets.length}`}
+              aria-current={index === sheet}
+              className={`relative h-[46px] w-[66px] shrink-0 overflow-hidden rounded border-2 bg-white transition ${
+                index === sheet ? "border-brand-500" : "border-line hover:border-brand-200"
+              }`}
+            >
+              <Image src={src} alt="" fill sizes="66px" className="object-contain p-0.5" />
+            </button>
+          ))}
+          <p className="ml-auto self-center text-[12px] text-muted">
+            Sheet {Math.min(sheet, sheets.length - 1) + 1} of {sheets.length}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** The dimension symbols this spring's sheets are annotated with. */
+function SheetSymbols({ spring }: { spring: SpringComponent }) {
+  const symbols =
+    spring.type === "torsion"
+      ? ["d", "Do", "Di", "L1", "L2", "θ"]
+      : ["d", "Do", "Di", "L0", "p"];
+
+  return (
+    <>
+      {symbols.map((symbol, index) => (
+        <span key={symbol}>
+          {index > 0 && ", "}
+          <em className="font-medium not-italic text-ink">{symbol}</em>
+        </span>
+      ))}
+    </>
   );
 }
 
