@@ -100,3 +100,31 @@ body {
 .animate-rise {
   animation: rise 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+
+/*
+ * Tailwind's reset sets every button to `cursor: default`, which reads as "not
+ * clickable" on a shop. Anything that acts like a control gets the hand back, and
+ * only disabled controls keep a cursor that says otherwise.
+ */
+button,
+summary,
+label[for],
+select,
+[role="button"],
+[role="tab"],
+[role="option"],
+a[href] {
+  cursor: pointer;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+input[type="range"] {
+  cursor: grab;
+}
+input[type="range"]:active {
+  cursor: grabbing;
+}
