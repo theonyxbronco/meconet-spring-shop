@@ -191,7 +191,13 @@ function CatalogueBar({ onInert }: { onInert: (message: string) => void }) {
   const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setHidden(window.scrollY > 80);
+    const onScroll = () => {
+      const away = window.scrollY > 80;
+      setHidden(away);
+      // Only the brand bar is left once the catalogue row has slid up, so anything
+      // scrolled to needs to clear that much and no more.
+      document.documentElement.style.setProperty("--header-offset", away ? "80px" : "130px");
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);

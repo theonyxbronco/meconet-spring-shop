@@ -21,24 +21,29 @@ npm run dev     # http://localhost:3000
 5. **Set a quantity and add to order.** The cart badge animates and the preview opens.
 6. **Check out.** The test ends on the confirmation screen.
 
-## The test target
+## The test springs
 
-Exactly one component is flagged as the spring a participant is handed physically:
+Components flagged `target: true` are the physical springs participants are handed. The
+scenario is a robotics workshop, so both live in the Mechatro Kit:
 
 | | Kit | Spring |
 |---|---|---|
-| **target** | Garage Kit | extension, Ø10.0 × 70 mm, wire 1.20 |
-| near-miss | Mechatro Kit | extension, Ø10.0 × 65 mm, wire 1.20 |
-| near-miss | Trampoline Kit | extension, Ø12.0 × 70 mm, wire 1.40 |
+| **spring 1** | Mechatro Kit | compression, Ø5.5 × 40 mm, wire 1.00 |
+| **spring 2** | Mechatro Kit | extension, Ø8.0 × 44 mm, wire 1.20, full loops |
+| near-miss | Bike Kit | extension, Ø8.0 × 48 mm, wire 1.00, hooks |
+| near-miss | Garage Kit | extension, Ø7.0 × 45 mm, wire 0.90 |
+| in-kit | Mechatro Kit | compression, Ø9.0 × 43 mm, wire 2.20 |
 
 The near-misses are deliberate: a participant cannot pass the task on a glance at a
-thumbnail, they have to read dimensions or compare the part. The Mechatro near-miss is
-plated steel rather than stainless like the rest of its kit, so the material column
-cannot give the answer away before the dimensions are compared.
+thumbnail, they have to read dimensions or compare the part. The wire diameters of the
+two test springs are estimates fitted to their photographs — measure the real ones.
 
-To retarget the test, edit the flagged component in `src/data/kits.ts` and set
-`target: true` on whichever spring matches the real part you hand out. The product
-code, spec table, 2D drawing and 3D model all regenerate from those numbers.
+To retarget the test, edit the flagged components in `src/data/kits.ts`. The product
+codes, spec tables, 2D drawings, 3D models and the finder's steering all follow.
+
+**Running a session:** the full staged playthrough — expected path, decoys, every
+off-path branch and how the finder recovers — is in
+[`docs/test-playthrough.md`](docs/test-playthrough.md).
 
 ## How the search works
 
@@ -63,7 +68,7 @@ version is designed around:
   thing the old questionnaire never did: an assortment covers a spread of sizes, so
   close is good enough.
 - **Someone who knows exactly what they need.** Dimensions in the opening message
-  (`Ø10 × 70 mm, wire 1.2`, `25 mm free length`, `ISO 10243 medium load`) are parsed
+  (`Ø5.5 × 40 mm`, `8x44`, `1 x 5.5 x 40`, `4 cm long`, `ISO 10243 medium load`) are parsed
   out, the questions are skipped, and the reply is in spec terms: which assortment
   carries that exact code.
 
@@ -72,6 +77,36 @@ wording only, never the ranking. The teaching content — how to tell the three 
 types apart, and how to take the three measurements with nothing but a ruler — lives in
 `SPRING_SHAPES` and `MEASURING_STEPS`, and is reachable from the panel header at any
 point in the conversation.
+
+### After the first message
+
+The conversation has its own text box, so participants can type answers instead of
+clicking (`2`, `it pushes`, `about 2 cm`), correct themselves (`actually it's 20mm`), or
+ask things (`how do I measure it?`, `which kit should I buy?`, `is this good for
+beginners?`). `src/lib/dialogue.ts` handles all of it: a typed answer to the open
+question, then any new fact about the spring (which re-ranks), then a table of the
+questions people reliably ask, then a rotating fallback. Every reply ends on the next
+step — the open question, or "open this kit at this spring and compare it with yours" —
+so nothing a participant types is a dead end. Tap-to-ask chips after the results walk
+them on to inspecting and cross-checking.
+
+### Steering
+
+`targetsFor` in `src/lib/search.ts` checks which test springs still fit everything said
+so far. While one does, its kit wins ties, gets one extra point, and its card
+highlights that spring. It never overrides evidence: a participant who
+says the spring pulls has to correct that before the target kit can win.
+
+### Checking it
+
+```bash
+npm run check:dialogue
+```
+
+replays ~85 scripted participant sessions, for each of the two springs — dimension formats, typos, units, vague
+descriptions, typed answers, questions, corrections, gibberish — through the same code
+the page uses, and checks each lands on the target. Add any phrase a pilot participant
+fumbles to `scripts/check-dialogue.mts`.
 
 The assistant deliberately never confirms or repeats an end product. It restates
 everything in terms of function and size, which keeps it inside what Meconet is allowed
@@ -116,8 +151,7 @@ Every image is resolved in `src/assets/brand.tsx`, so artwork is swapped in one 
 - `SpringArt` — generated from each spring's own dimensions. Leave it: it is the only
   art drawn to scale, which is why the actual-size overlay may use nothing else.
 
-Photography is deliberately partial. The **Mechatro Kit** is the kit shown in moderated
-sessions, so it is the only one dressed with real photographs and real drawing sheets
+Photography is deliberately partial. The **Mechatro Kit** is the kit the test leads to, so it is the only one dressed with real photographs and real drawing sheets
 (`public/springs`); every other kit renders from the generated artwork, which is derived
 from the same dimensions and so is never wrong, only plainer.
 
@@ -130,10 +164,12 @@ up directly.
 
 The Mechatro Kit's dimensions are not invented: outside diameter, free length, wire
 gauge and coil count were measured off its photographs, so the generated 3D model and
-the photograph of the same component show a spring of the same proportions. The one
-exception is the Ø10 × 65 near-miss, whose dimensions are fixed by the test design —
-its photograph was chosen for having open machine-hook ends to match, and it reads a
-little shorter than the model.
+the photograph of the same component show a spring of the same proportions. The
+exceptions are the two test springs, Ø5.5 × 40 and Ø8 × 44, whose length and diameter
+are fixed by the physical springs. Each was given to the photograph already showing a
+spring of those proportions, keeping that photograph's coil count, with the wire
+gauge chosen so the coils sit as they do in the photo. The Ø10 × 65 extension spring's
+photograph also reads a little shorter than its model.
 
 Coil count is what makes a spring look tight or stretched, and it is easy to get wrong
 by eye: a compression spring's pitch should land near 1.8 × its wire gauge (2.2 × the

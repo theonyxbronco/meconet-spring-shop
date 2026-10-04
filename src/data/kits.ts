@@ -2,22 +2,26 @@ import { buildComponent, type SpecInput } from "./build";
 import type { Kit } from "./types";
 
 /**
- * THE TEST TARGET
+ * THE TEST SPRINGS
  *
- * Exactly one component in the catalogue is flagged `target: true` — the spring a
- * participant is handed physically and asked to locate. Two deliberate near-misses
- * sit in other kits so the task cannot be passed by glancing at a thumbnail:
+ * Components flagged `target: true` are the physical springs participants are handed
+ * and asked to locate. The scenario is a robotics workshop, so both live in the
+ * Mechatro Kit:
  *
- *   target      Garage Kit      extension, Ø10.0 × 70 mm, wire 1.20
- *   near-miss   Mechatro Kit    extension, Ø10.0 × 65 mm, wire 1.20  (5 mm shorter)
- *   near-miss   Trampoline Kit  extension, Ø12.0 × 70 mm, wire 1.40  (same length, heavier)
+ *   spring 1   Mechatro Kit   compression, Ø5.5 × 40 mm, wire 1.00
+ *   spring 2   Mechatro Kit   extension,   Ø8.0 × 44 mm, wire 1.20, full loops
  *
- * The Mechatro near-miss is deliberately plated steel like the target, not stainless
- * like the rest of that kit — if the material differed, the spec table would give the
- * answer away before the dimensions were ever compared.
+ * Near-misses the participant has to rule out by comparing, not by glancing:
  *
- * When the real physical spring is measured, change the target's numbers here and
- * everything downstream — code, specs, drawing, 3D model — follows automatically.
+ *   Bike Kit       extension,   Ø8.0 × 48 mm, wire 1.00  (4 mm longer, hooks)
+ *   Garage Kit     extension,   Ø7.0 × 45 mm, wire 0.90  (1 mm narrower, 1 mm longer)
+ *   Mechatro Kit   compression, Ø9.0 × 43 mm, wire 2.20  (same box, much fatter)
+ *
+ * The spring finder's dialogue (`src/lib/search.ts`, `src/lib/dialogue.ts`) reads
+ * these flags to decide what to steer towards, so it never names the kit itself.
+ * Wire diameters are estimates fitted to the photographs; when the real springs are
+ * measured, change the numbers here and everything downstream — code, specs,
+ * drawing, 3D model, dialogue — follows. Then run `npm run check:dialogue`.
  */
 
 /**
@@ -80,7 +84,7 @@ export const kits: Kit[] = [
       actions: ["pull", "push", "rotate"],
       sizes: ["small", "medium"],
       environments: ["indoor", "outdoor"],
-      keywords: ["garage", "door", "gate", "hinge", "latch", "workshop", "repair", "mixed", "general", "home", "diy", "tool", "lock", "handle", "car", "bonnet", "boot"],
+      keywords: ["garage", "door", "gate", "hinge", "latch", "repair", "mixed", "general", "home", "diy", "tool", "lock", "handle", "car", "bonnet", "boot"],
     },
     components: [
       { type: "compression", wire: 0.8, outer: 6.0, len: 20, coils: 15, end: "Closed and ground", quantity: 10 },
@@ -89,7 +93,7 @@ export const kits: Kit[] = [
       { type: "compression", wire: 2.0, outer: 16.0, len: 50, coils: 15, end: "Closed and ground", quantity: 6 },
       { type: "extension", wire: 0.7, outer: 5.5, len: 32, coils: 30, end: "Full loop both ends", quantity: 10 },
       { type: "extension", wire: 0.9, outer: 7.0, len: 45, coils: 36, end: "Full loop both ends", quantity: 10 },
-      { type: "extension", wire: 1.2, outer: 10.0, len: 70, coils: 40, end: "Machine hooks both ends", quantity: 8, target: true },
+      { type: "extension", wire: 1.2, outer: 10.0, len: 70, coils: 40, end: "Machine hooks both ends", quantity: 8 },
       { type: "extension", wire: 1.6, outer: 14.0, len: 95, coils: 42, end: "Machine hooks both ends", quantity: 6 },
       { type: "torsion", wire: 1.0, outer: 9.0, len: 22, coils: 6, end: "90° straight legs", quantity: 8 },
       { type: "torsion", wire: 1.4, outer: 12.0, len: 28, coils: 7, end: "180° straight legs", quantity: 8 },
@@ -112,19 +116,22 @@ export const kits: Kit[] = [
       actions: ["push", "pull", "rotate"],
       sizes: ["small", "medium"],
       environments: ["indoor"],
-      keywords: ["mechatro", "mechatronic", "robot", "robotics", "automation", "actuator", "gripper", "servo", "linkage", "sensor", "limit switch", "end stop", "precision", "electronics", "machine", "cnc", "3d printer", "prototype"],
+      keywords: ["mechatro", "mechatronic", "mechatronics", "robot", "robots", "robotic", "robotics", "arduino", "raspberry pi", "makerspace", "maker", "stem", "lego", "automation", "actuator", "gripper", "servo", "linkage", "sensor", "limit switch", "end stop", "precision", "electronics", "machine", "cnc", "3d printer", "prototype"],
     },
     components: [
-      // Compression — plunger returns and preload, smallest to largest.
-      { type: "compression", wire: 1.0, outer: 5.0, len: 33, coils: 22, end: "Closed and ground", material: "stainless", quantity: 12, photo: S("minimalist-steel-compression-spring"), drawings: COMPRESSION_SHEETS },
+      // Compression — plunger returns and preload. The first is test spring 1, Ø5.5 × 40:
+      // its long, thin photograph is the one in the kit with those proportions.
+      { type: "compression", wire: 1.0, outer: 5.5, len: 40, coils: 22, end: "Closed and ground", material: "stainless", quantity: 12, target: true, photo: S("minimalist-steel-compression-spring"), drawings: COMPRESSION_SHEETS },
       { type: "compression", wire: 1.3, outer: 6.0, len: 18, coils: 9, end: "Closed and ground", material: "stainless", quantity: 12, photo: S("polished-chrome-compression-spring"), drawings: COMPRESSION_SHEETS },
       { type: "compression", wire: 2.2, outer: 9.0, len: 43, coils: 16, end: "Closed and ground", material: "stainless", quantity: 8, photo: S("polished-steel-compression-spring"), drawings: COMPRESSION_SHEETS },
       { type: "compression", wire: 1.8, outer: 12.0, len: 28, coils: 8, end: "Closed and ground", material: "stainless", quantity: 8, photo: S("polished-silver-compression-spring"), drawings: COMPRESSION_SHEETS },
 
-      // Extension — gripper and linkage returns. All but the near-miss close into a
-      // full loop, which is what their photographs show.
+      // Extension — gripper and linkage returns. All but the hooked Ø10 × 65 close
+      // into a full loop, which is what their photographs show. The second is test
+      // spring 2, Ø8 × 44: 25 coils of 1.2 wire sit touching, as in its photograph,
+      // over exactly the body length that 44 mm leaves after the two loops.
       { type: "extension", wire: 0.45, outer: 6.0, len: 22, coils: 26, end: "Full loop both ends", material: "stainless", quantity: 12, photo: S("polished-diagonal-extension-spring-2"), drawings: EXTENSION_LOOP_SHEETS },
-      { type: "extension", wire: 0.75, outer: 8.0, len: 37, coils: 30, end: "Full loop both ends", material: "stainless", quantity: 10, photo: S("polished-diagonal-extension-spring"), drawings: EXTENSION_LOOP_SHEETS },
+      { type: "extension", wire: 1.2, outer: 8.0, len: 44, coils: 25, end: "Full loop both ends", material: "stainless", quantity: 10, target: true, photo: S("polished-diagonal-extension-spring"), drawings: EXTENSION_LOOP_SHEETS },
       { type: "extension", wire: 1.2, outer: 10.0, len: 65, coils: 39, end: "Machine hooks both ends", quantity: 8, photo: S("metal-extension-spring-on-white"), drawings: EXTENSION_HOOK_SHEETS },
       { type: "extension", wire: 1.0, outer: 14.0, len: 57, coils: 32, end: "Full loop both ends", material: "stainless", quantity: 6, photo: S("polished-stainless-steel-extension-spring"), drawings: EXTENSION_LOOP_SHEETS },
 
@@ -265,4 +272,5 @@ export const allComponents = kits.flatMap((k) =>
   k.components.map((component) => ({ component, kit: k })),
 );
 
-export const testTarget = allComponents.find(({ component }) => component.isTestTarget);
+/** The springs participants are handed, in catalogue order. */
+export const testTargets = allComponents.filter(({ component }) => component.isTestTarget);

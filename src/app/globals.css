@@ -32,6 +32,21 @@
 
 :root {
   color-scheme: light;
+
+  /*
+   * How much fixed chrome sits above the page, plus a little breathing room.
+   * The brand bar (64px) is always there; the catalogue row (50px) slides away
+   * once you scroll, so Header keeps this value in step with what is on screen.
+   */
+  --header-offset: 130px;
+}
+
+/*
+ * One place decides where an anchor, a hash link or any scrollIntoView comes to
+ * rest, so nothing is ever scrolled up underneath the fixed header.
+ */
+html {
+  scroll-padding-top: var(--header-offset);
 }
 
 html,

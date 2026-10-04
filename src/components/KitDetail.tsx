@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { KitGallery } from "./KitGallery";
 import { PurchasePanel } from "./PurchasePanel";
 import { ComponentCarousel } from "./ComponentCarousel";
@@ -14,6 +15,11 @@ export function KitDetail({ kit }: { kit: Kit }) {
 
   return (
     <>
+      {/* Arriving from the spring finder opens the kit at the spring it pointed to. */}
+      <Suspense fallback={null}>
+        <SpringFromQuery kit={kit} onSpring={setSelectedId} />
+      </Suspense>
+
       <nav aria-label="Breadcrumb" className="border-b border-line bg-brand-50/50">
         <ol className="mx-auto flex max-w-[1320px] gap-2 px-5 py-3 text-[13.5px] text-muted">
           <li>
@@ -56,4 +62,30 @@ export function KitDetail({ kit }: { kit: Kit }) {
       <ComponentDetail spring={selected} />
     </>
   );
+}
+
+/**
+ * Reads `?spring=<id>` and selects that spring, then brings its detail into view —
+ * so "open the kit at this spring" from the finder lands the participant on the part
+ * they are meant to compare, not on whichever spring happens to be first in the box.
+ */
+function SpringFromQuery({ kit, onSpring }: { kit: Kit; onSpring: (id: string) => void }) {
+  const requested = useSearchParams().get("spring");
+  const handled = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!requested || handled.current === requested) return;
+    if (!kit.components.some((component) => component.id === requested)) return;
+    onSpring(requested);
+    const timer = setTimeout(() => {
+      // Marked as handled only once the scroll has actually run. Claiming it up front
+      // loses the scroll under a Strict Mode double mount: the cleanup cancels the
+      // timer and the second pass then sees the request as already dealt with.
+      handled.current = requested;
+      document.getElementById("included-springs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [requested, kit, onSpring]);
+
+  return null;
 }

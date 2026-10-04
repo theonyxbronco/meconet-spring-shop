@@ -1,13 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { SpringPhoto } from "@/assets/brand";
-import { LENGTH_LABEL } from "@/lib/springMetrics";
 import { SPRING_TYPE_LABEL, type SpringComponent } from "@/data/types";
 import { ChevronLeftIcon, ChevronRightIcon } from "./icons";
-
-const POPOVER_WIDTH = 318;
 
 export function ComponentCarousel({
   title,
@@ -22,39 +18,38 @@ export function ComponentCarousel({
 }) {
   const scroller = useRef<HTMLDivElement>(null);
   const cards = useRef(new Map<string, HTMLButtonElement>());
-  const [popoverLeft, setPopoverLeft] = useState<number | null>(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(false);
 
-  const selected = components.find((component) => component.id === selectedId);
-
-  // The spec popover hangs below the selected card, so it has to track horizontal scroll.
-  const reposition = useCallback(() => {
+  // The arrows are only meaningful while there is somewhere left to scroll.
+  const readEdges = useCallback(() => {
     const container = scroller.current;
-    const card = cards.current.get(selectedId);
-    if (!container || !card) return setPopoverLeft(null);
-    const raw = card.offsetLeft - container.scrollLeft;
-    const max = container.clientWidth - POPOVER_WIDTH;
-    setPopoverLeft(Math.max(0, Math.min(raw, Math.max(max, 0))));
+    if (!container) return;
     setAtStart(container.scrollLeft <= 2);
     setAtEnd(container.scrollLeft + container.clientWidth >= container.scrollWidth - 2);
-  }, [selectedId]);
+  }, []);
 
-  useLayoutEffect(reposition, [reposition, components]);
+  useLayoutEffect(readEdges, [readEdges, components]);
 
   useEffect(() => {
     const container = scroller.current;
     if (!container) return;
-    container.addEventListener("scroll", reposition, { passive: true });
-    window.addEventListener("resize", reposition);
+    container.addEventListener("scroll", readEdges, { passive: true });
+    window.addEventListener("resize", readEdges);
     return () => {
-      container.removeEventListener("scroll", reposition);
-      window.removeEventListener("resize", reposition);
+      container.removeEventListener("scroll", readEdges);
+      window.removeEventListener("resize", readEdges);
     };
-  }, [reposition]);
+  }, [readEdges]);
 
-  // Keep the chosen card in view when selection changes from elsewhere on the page.
+  // Keep the chosen card in view when the selection changes from elsewhere on the page.
+  // Only on a real change: arriving on the page is not a selection, and scrolling the
+  // carousel into view then drags the whole page down past the gallery. Comparing the id
+  // rather than tracking "have I mounted" also survives a Strict Mode double mount.
+  const shown = useRef(selectedId);
   useEffect(() => {
+    if (shown.current === selectedId) return;
+    shown.current = selectedId;
     cards.current.get(selectedId)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
   }, [selectedId]);
 
@@ -63,17 +58,22 @@ export function ComponentCarousel({
   };
 
   return (
-    <section className="bg-brand-50/60 py-14">
+    <section id="included-springs" className="border-y border-line bg-brand-50/60 py-6">
       <div className="mx-auto max-w-[1320px] px-5">
-        <h2 className="text-[30px] font-extrabold tracking-tight text-ink">{title}</h2>
+        <div className="flex items-baseline justify-between gap-4">
+          <h2 className="text-[19px] font-extrabold tracking-tight text-ink">{title}</h2>
+          <p className="shrink-0 text-[13px] text-muted">
+            {components.length} springs · pick one to see it below
+          </p>
+        </div>
 
-        <div className="relative mt-7">
+        <div className="relative mt-3">
           <ArrowButton side="left" disabled={atStart} onClick={() => nudge(-1)} />
           <ArrowButton side="right" disabled={atEnd} onClick={() => nudge(1)} />
 
           <div
             ref={scroller}
-            className="no-scrollbar flex gap-4 overflow-x-auto scroll-smooth px-1 pb-2"
+            className="no-scrollbar flex gap-2.5 overflow-x-auto scroll-smooth px-1 py-1"
             role="listbox"
             aria-label="Springs included in this assortment"
           >
@@ -88,65 +88,33 @@ export function ComponentCarousel({
                   }}
                   role="option"
                   aria-selected={active}
+                  title={`${component.code} — ${SPRING_TYPE_LABEL[component.type]}, Ø${component.outerDiameter} × ${component.freeLength} mm`}
                   onClick={() => onSelect(component)}
-                  className={`relative flex w-[188px] shrink-0 flex-col rounded-xl border-2 bg-surface p-4 text-left transition ${
+                  className={`flex w-[124px] shrink-0 flex-col items-center rounded-lg border-2 bg-surface px-2 py-2 text-center transition ${
                     active
                       ? "border-brand-500 shadow-card"
-                      : "border-transparent shadow-card hover:border-brand-100"
+                      : "border-transparent shadow-card hover:border-brand-200"
                   }`}
                 >
                   {component.isTestTarget && <span className="sr-only">Reference component</span>}
-                  <div className="flex h-[104px] items-center justify-center">
-                    <SpringPhoto spring={component} className="h-full w-full" sizes="188px" />
+                  <div className="flex h-[52px] w-full items-center justify-center">
+                    <SpringPhoto spring={component} className="h-full w-full" sizes="124px" />
                   </div>
-                  <p className="mt-3 text-[12px] text-muted">Product code:</p>
-                  <p className="text-[13.5px] font-bold leading-snug text-ink">{component.code}</p>
-                  <p className="mt-1 text-[12px] text-muted">{component.quantity} pcs</p>
+                  <p
+                    className={`mt-1.5 w-full truncate text-[11.5px] font-bold leading-tight ${
+                      active ? "text-brand-600" : "text-ink"
+                    }`}
+                  >
+                    {component.code}
+                  </p>
+                  <p className="text-[11px] text-muted">{component.quantity} pcs</p>
                 </button>
               );
             })}
           </div>
-
-          <div className="relative h-[182px]">
-            <AnimatePresence mode="wait">
-              {selected && popoverLeft !== null && (
-                <motion.dl
-                  key={selected.id}
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.18 }}
-                  style={{ left: popoverLeft, width: POPOVER_WIDTH }}
-                  className="absolute top-2 space-y-1.5 rounded-xl border border-line bg-surface/95 p-4 text-[13px] shadow-card backdrop-blur"
-                >
-                  <Row label="Product code" value={selected.code} strong />
-                  <Row label="Spring type" value={SPRING_TYPE_LABEL[selected.type]} />
-                  <Row
-                    label="Dimensions"
-                    value={`Ø${selected.outerDiameter} × ${selected.freeLength} mm`}
-                  />
-                  <Row label={LENGTH_LABEL[selected.type]} value={`${selected.freeLength} mm`} />
-                  <Row
-                    label="Load range"
-                    value={`${selected.loadRange[0]} – ${selected.loadRange[1]} ${selected.loadUnit}`}
-                  />
-                  <Row label="Material" value={selected.material} />
-                </motion.dl>
-              )}
-            </AnimatePresence>
-          </div>
         </div>
       </div>
     </section>
-  );
-}
-
-function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
-  return (
-    <div className="flex gap-3">
-      <dt className="w-[108px] shrink-0 text-muted">{label}:</dt>
-      <dd className={strong ? "font-bold text-ink" : "text-ink"}>{value}</dd>
-    </div>
   );
 }
 
@@ -164,11 +132,11 @@ function ArrowButton({
       onClick={onClick}
       disabled={disabled}
       aria-label={side === "left" ? "Scroll left" : "Scroll right"}
-      className={`absolute top-[70px] z-10 flex h-10 w-10 items-center justify-center rounded-full border border-line bg-surface text-ink shadow-card transition ${
-        side === "left" ? "-left-5" : "-right-5"
+      className={`absolute top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-surface text-ink shadow-card transition ${
+        side === "left" ? "-left-4" : "-right-4"
       } ${disabled ? "cursor-default opacity-35" : "hover:border-brand-400 hover:text-brand-600"}`}
     >
-      {side === "left" ? <ChevronLeftIcon width={19} height={19} /> : <ChevronRightIcon width={19} height={19} />}
+      {side === "left" ? <ChevronLeftIcon width={17} height={17} /> : <ChevronRightIcon width={17} height={17} />}
     </button>
   );
 }

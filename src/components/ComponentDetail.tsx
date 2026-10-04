@@ -52,9 +52,9 @@ export function ComponentDetail({ spring }: { spring: SpringComponent }) {
   const attributes = specAttributes(spring);
 
   return (
-    <section className="mx-auto max-w-[1320px] px-5 py-16">
+    <section className="mx-auto max-w-[1320px] px-5 pb-16 pt-8">
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <div className="lg:sticky lg:top-6 lg:self-start">
+        <div className="lg:sticky lg:top-[var(--header-offset)] lg:self-start">
           <div className="relative h-[420px] overflow-hidden rounded-xl border border-line bg-surface">
             {mode === "3d" ? (
               <SpringViewer spring={spring} />

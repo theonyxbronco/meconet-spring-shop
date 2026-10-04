@@ -1,6 +1,9 @@
 "use client";
 
+import Link from "next/link";
+import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import type { ChatLink } from "@/lib/dialogue";
 import { MEASURING_STEPS, SPRING_SHAPES, type Question } from "@/lib/search";
 import { ArrowRightIcon, CheckIcon, RulerIcon, SparkIcon } from "./icons";
 
@@ -8,6 +11,8 @@ export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   text: string;
+  /** A next step the assistant is pointing at, shown as a button under the message. */
+  link?: ChatLink;
 }
 
 export function ConversationPanel({
@@ -20,6 +25,8 @@ export function ConversationPanel({
   onAnswer,
   onSkip,
   onReset,
+  onSend,
+  suggestions,
   finished,
 }: {
   messages: ChatMessage[];
@@ -31,8 +38,16 @@ export function ConversationPanel({
   onAnswer: (questionId: Question["id"], value: string, label: string, opensGuide?: boolean) => void;
   onSkip: () => void;
   onReset: () => void;
+  /** Anything typed into the conversation after the opening message. */
+  onSend: (text: string) => void;
+  /** Tap-to-ask follow-ups, shown once there is a result to ask about. */
+  suggestions: string[];
   finished: boolean;
 }) {
+  const [draft, setDraft] = useState("");
+  // Only the newest "open this" button is live; older ones would just repeat it.
+  const linkedId = messages.findLast((message) => message.link)?.id;
+
   return (
     <section
       aria-label="Guided spring finder"
@@ -87,6 +102,15 @@ export function ConversationPanel({
               }`}
             >
               {message.text}
+              {message.link && message.id === linkedId && (
+                <Link
+                  href={message.link.href}
+                  className="mt-2.5 flex w-fit items-center gap-2 rounded-full bg-brand-500 px-4 py-2 text-[13.5px] font-semibold text-white transition hover:bg-brand-600"
+                >
+                  {message.link.label}
+                  <ArrowRightIcon width={16} height={16} />
+                </Link>
+              )}
             </span>
           </motion.li>
         ))}
@@ -145,6 +169,20 @@ export function ConversationPanel({
         </div>
       )}
 
+      {suggestions.length > 0 && (
+        <div className="flex flex-wrap gap-2 pb-4">
+          {suggestions.map((suggestion) => (
+            <button
+              key={suggestion}
+              onClick={() => onSend(suggestion)}
+              className="rounded-full border border-brand-100 bg-surface px-3.5 py-1.5 text-left text-[13px] text-ink-soft transition hover:border-brand-400 hover:text-brand-600"
+            >
+              {suggestion}
+            </button>
+          ))}
+        </div>
+      )}
+
       {finished && !thinking && (
         <div className="animate-rise flex flex-wrap items-center gap-3 border-t border-line pt-4">
           <span className="flex items-center gap-2 rounded-full bg-stock-bg px-3.5 py-1.5 text-[13.5px] font-semibold text-stock">
@@ -160,6 +198,37 @@ export function ConversationPanel({
           </a>
         </div>
       )}
+
+      {/* Typing is always allowed: an answer, a measurement, a question, a correction. */}
+      <form
+        className="mt-4 flex items-center gap-2 rounded-full border border-line-strong bg-surface p-1.5 pl-4 focus-within:border-brand-500"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (!draft.trim() || thinking) return;
+          onSend(draft);
+          setDraft("");
+        }}
+      >
+        <input
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          placeholder={
+            question
+              ? "Or type your answer — a measurement or a question works too"
+              : "Ask a question, or tell me more about the spring"
+          }
+          aria-label="Reply to the spring finder"
+          className="w-full bg-transparent py-2 text-[14.5px] outline-none placeholder:text-muted"
+        />
+        <button
+          type="submit"
+          aria-label="Send"
+          disabled={!draft.trim() || thinking}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white transition hover:bg-brand-600 disabled:opacity-40"
+        >
+          <ArrowRightIcon width={18} height={18} />
+        </button>
+      </form>
     </section>
   );
 }

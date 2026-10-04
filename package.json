@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "check:dialogue": "node --no-warnings --import ./scripts/register-ts.mjs scripts/check-dialogue.mts"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",

@@ -70,7 +70,7 @@ export function KitCard({
         </p>
 
         <Link
-          href={`/assortments/${kit.slug}`}
+          href={highlight ? `/assortments/${kit.slug}?spring=${highlight.id}` : `/assortments/${kit.slug}`}
           className="mt-5 flex items-center gap-2.5 text-[15px] font-semibold text-brand-600 transition group-hover:gap-3.5"
         >
           <ArrowRightIcon width={19} height={19} />

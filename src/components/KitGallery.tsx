@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { KitBoxArt, SpringPhoto } from "@/assets/brand";
 import type { Kit, SpringComponent } from "@/data/types";
@@ -8,24 +8,10 @@ import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, ZoomIcon } from "./icons"
 
 type Slide = { key: string; label: string; spring?: SpringComponent };
 
-/**
- * One spring per type, so the strip advertises the spread of the kit rather than
- * three near-identical compression springs off the top of the list.
- */
-function featured(kit: Kit): SpringComponent[] {
-  const seen = new Set<SpringComponent["type"]>();
-  const pick = kit.components.filter((spring) => {
-    if (seen.has(spring.type)) return false;
-    seen.add(spring.type);
-    return true;
-  });
-  return pick.slice(0, 3);
-}
-
 export function KitGallery({ kit }: { kit: Kit }) {
   const slides: Slide[] = [
     { key: "box", label: `${kit.name} assortment box` },
-    ...featured(kit).map((spring) => ({
+    ...kit.components.map((spring) => ({
       key: spring.id,
       label: `${spring.name}, ${spring.code}`,
       spring,
@@ -35,6 +21,24 @@ export function KitGallery({ kit }: { kit: Kit }) {
   const [index, setIndex] = useState(0);
   const [zoomed, setZoomed] = useState(false);
   const active = slides[index];
+  const rail = useRef<HTMLDivElement>(null);
+
+  // The rail holds every spring in the kit, so it scrolls — stepping through with the
+  // arrows has to bring the matching thumbnail back into view. It nudges the rail's own
+  // scrollTop rather than calling scrollIntoView, which would drag the whole page along
+  // with it, and it sits out the first render so that merely opening the page is still.
+  const shown = useRef(index);
+  useEffect(() => {
+    if (shown.current === index) return;
+    shown.current = index;
+    const strip = rail.current;
+    const thumb = strip?.children[index] as HTMLElement | undefined;
+    if (!strip || !thumb) return;
+    const above = thumb.offsetTop - strip.scrollTop;
+    const below = thumb.offsetTop + thumb.offsetHeight - (strip.scrollTop + strip.clientHeight);
+    if (above < 0) strip.scrollTo({ top: thumb.offsetTop, behavior: "smooth" });
+    else if (below > 0) strip.scrollTo({ top: strip.scrollTop + below, behavior: "smooth" });
+  }, [index]);
 
   const step = (direction: -1 | 1) =>
     setIndex((current) => (current + direction + slides.length) % slides.length);
@@ -48,14 +52,17 @@ export function KitGallery({ kit }: { kit: Kit }) {
 
   return (
     <div className="flex gap-4">
-      <div className="flex w-[74px] shrink-0 flex-col gap-3">
+      <div
+        ref={rail}
+        className="no-scrollbar flex max-h-[364px] w-[74px] shrink-0 flex-col gap-3 overflow-y-auto"
+      >
         {slides.map((slide, slideIndex) => (
           <button
             key={slide.key}
             onClick={() => setIndex(slideIndex)}
             aria-label={`Show ${slide.label}`}
             aria-current={slideIndex === index}
-            className={`flex h-[62px] items-center justify-center rounded-lg border-2 bg-surface p-1.5 transition ${
+            className={`flex h-[62px] shrink-0 items-center justify-center rounded-lg border-2 bg-surface p-1.5 transition ${
               slideIndex === index ? "border-brand-500" : "border-line hover:border-brand-100"
             }`}
           >
