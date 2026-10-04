@@ -216,3 +216,73 @@ input[type="range"]:active {
   height: 11px;
   width: 11px;
 }
+
+/* ---- Printable order documents ---- */
+
+/*
+ * One sheet, sized in millimetres so what is on screen is what comes out of the
+ * printer. `flex` plus `mt-auto` on the footer keeps the letterhead footer at the
+ * bottom of a short document instead of floating under a half-empty table.
+ */
+.doc-sheet {
+  background: var(--color-surface);
+  box-sizing: border-box;
+  color: var(--color-ink);
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto 20px;
+  min-height: 297mm;
+  padding: 16mm 16mm 12mm;
+  width: 210mm;
+}
+
+/* On screen the sheets sit on a grey desk, as a document viewer would show them. */
+.doc-screen {
+  background: #e7eef6;
+  min-height: 100vh;
+  padding-bottom: 24px;
+}
+.doc-screen .doc-sheet {
+  box-shadow: var(--shadow-card);
+}
+
+@media print {
+  /*
+   * Everything that is not the document gets out of the way: the fixed header would
+   * otherwise repeat on every sheet, and the page background would flood the paper.
+   */
+  body > *:not(main),
+  .no-print {
+    display: none !important;
+  }
+
+  html,
+  body,
+  .doc-screen {
+    background: #ffffff !important;
+    padding: 0 !important;
+  }
+
+  .doc-sheet {
+    box-shadow: none;
+    margin: 0;
+    /* A bundle prints one document per sheet rather than running them together. */
+    break-after: page;
+    page-break-after: always;
+  }
+  .doc-sheet:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  /* Keep a line item and its row intact across a page boundary. */
+  tr,
+  .doc-sheet table {
+    break-inside: avoid;
+  }
+
+  @page {
+    margin: 0;
+    size: A4;
+  }
+}

@@ -116,13 +116,15 @@ export function Header() {
               </button>
             </nav>
 
-            <button
-              onClick={() => showToast("Accounts are outside this prototype")}
+            {/* The archive is where people come back for paperwork, so it needs to be
+                reachable from every page, not only from the order they just placed. */}
+            <Link
+              href="/orders"
               className="ml-auto flex shrink-0 items-center gap-2 text-[13.5px] text-white/90 hover:text-white xl:ml-0"
             >
               <UserIcon width={19} height={19} />
-              <span className="hidden sm:inline">Log in</span>
-            </button>
+              <span className="hidden sm:inline">Orders &amp; documents</span>
+            </Link>
 
             <div className="relative shrink-0" onMouseEnter={openPreview} onMouseLeave={closePreview}>
               <Link
