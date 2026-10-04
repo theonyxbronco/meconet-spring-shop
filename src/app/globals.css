@@ -128,3 +128,91 @@ input[type="range"] {
 input[type="range"]:active {
   cursor: grabbing;
 }
+
+/* ---- Leaflet: brand skin for the nearby-workshops map ---- */
+
+.leaflet-container {
+  font: inherit;
+  background: var(--color-page);
+}
+
+/*
+ * OpenStreetMap's own style is a lot of green and ochre next to a navy-and-blue
+ * shop. Desaturating and lightening the tiles alone — not the controls, the
+ * attribution or the pins — gets most of the way to a Positron-style basemap while
+ * leaving the map keyless and the credits legible.
+ */
+.leaflet-tile-pane {
+  filter: grayscale(0.62) saturate(0.78) brightness(1.06) contrast(0.94);
+}
+
+/* The map lives in a dialog that is itself scrollable — keep tiles under the chrome. */
+.leaflet-pane,
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 1;
+}
+
+.leaflet-control-zoom a,
+.leaflet-control-attribution {
+  color: var(--color-ink-soft);
+}
+
+.leaflet-control-zoom a {
+  border-color: var(--color-line);
+  font-weight: 700;
+}
+.leaflet-control-zoom a:hover {
+  color: var(--color-brand-600);
+}
+
+.leaflet-control-attribution {
+  font-size: 10.5px;
+  background: rgba(255, 255, 255, 0.82);
+}
+.leaflet-control-attribution a {
+  color: var(--color-brand-600);
+}
+
+.leaflet-tooltip {
+  border: 1px solid var(--color-line);
+  border-radius: 7px;
+  box-shadow: var(--shadow-card);
+  color: var(--color-ink);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 4px 8px;
+}
+
+/* Numbered teardrop pins. Colour comes from `currentColor` inside the SVG. */
+.meconet-pin {
+  color: var(--color-brand-500);
+  height: 100%;
+  width: 100%;
+  transition: color 0.18s ease;
+}
+.meconet-pin:hover {
+  color: var(--color-brand-600);
+}
+.meconet-pin--on {
+  color: var(--color-navy-900);
+  filter: drop-shadow(0 2px 4px rgba(10, 44, 87, 0.38));
+}
+
+/* "You are here": a dot inside a soft halo, deliberately unlike the workshop pins. */
+.meconet-home {
+  align-items: center;
+  background: rgba(31, 133, 240, 0.18);
+  border-radius: 999px;
+  display: flex;
+  height: 100%;
+  justify-content: center;
+  width: 100%;
+}
+.meconet-home span {
+  background: var(--color-navy-800);
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  height: 11px;
+  width: 11px;
+}

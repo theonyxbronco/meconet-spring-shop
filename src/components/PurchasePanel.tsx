@@ -1,15 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { formatEUR, useCart } from "@/lib/cart";
+import { formatDistance, workshopsStocking } from "@/data/workshops";
 import type { Kit } from "@/data/types";
-import { CheckIcon, MinusIcon, PlusIcon, TruckIcon } from "./icons";
+import { LocalStockOverlay } from "./LocalStockOverlay";
+import { ArrowRightIcon, CheckIcon, MinusIcon, PinIcon, PlusIcon, TruckIcon } from "./icons";
 
 export function PurchasePanel({ kit }: { kit: Kit }) {
   const cart = useCart();
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+  const [showingMap, setShowingMap] = useState(false);
+
+  const nearby = useMemo(() => workshopsStocking(kit.slug), [kit.slug]);
 
   const addToOrder = () => {
     cart.add(kit.slug, quantity);
@@ -91,6 +96,37 @@ export function PurchasePanel({ kit }: { kit: Kit }) {
         {kit.components.length} spring types ·{" "}
         {kit.components.reduce((total, component) => total + component.quantity, 0)} pieces per box
       </p>
+
+      {/*
+       * Delivery is 1-2 days; a workshop across town is this afternoon. Only worth
+       * saying when somebody nearby actually has the box, so the block disappears
+       * entirely rather than announcing that there is nowhere to go.
+       */}
+      {nearby.length > 0 && (
+        <button
+          onClick={() => setShowingMap(true)}
+          className="mt-5 flex w-full items-start gap-3 rounded-xl border border-line bg-page p-4 text-left transition hover:border-brand-400 hover:bg-brand-50"
+        >
+          <PinIcon width={20} height={20} className="mt-0.5 shrink-0 text-brand-500" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-[14.5px] font-bold text-ink">Also available near you</span>
+            <span className="mt-0.5 block text-[13px] leading-relaxed text-muted">
+              {nearby.length} {nearby.length === 1 ? "workshop" : "workshops"} in the capital region
+              stock this kit — nearest is {nearby[0].name}, {formatDistance(nearby[0].distanceKm)} away.
+            </span>
+            <span className="mt-2 flex items-center gap-1.5 text-[13px] font-semibold text-brand-600">
+              See them on the map
+              <ArrowRightIcon width={15} height={15} />
+            </span>
+          </span>
+        </button>
+      )}
+
+      <AnimatePresence>
+        {showingMap && (
+          <LocalStockOverlay kit={kit} stops={nearby} onClose={() => setShowingMap(false)} />
+        )}
+      </AnimatePresence>
     </aside>
   );
 }
