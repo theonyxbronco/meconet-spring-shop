@@ -283,7 +283,6 @@ export function HomeView() {
   const showingResults = phase === "results" && results.length > 0;
   const categoryLabel = isSpringType(typeFilter) ? SPRING_TYPE_LABEL[typeFilter] : undefined;
   const describePrompts = STARTER_PROMPTS.filter((prompt) => prompt.kind === "describe");
-  const specPrompts = STARTER_PROMPTS.filter((prompt) => prompt.kind === "spec");
 
   return (
     <>
@@ -291,17 +290,15 @@ export function HomeView() {
         <div className="relative mx-auto max-w-[1320px] px-5 pb-16 pt-14">
           <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,44%)]">
             <div className="relative z-10 max-w-[760px]">
-              <p className="text-[14px] font-bold uppercase tracking-[0.18em] text-brand-500">
-                Spring Shop · for home, workshop and small business
-              </p>
-              <h1 className="mt-3 text-[clamp(2.4rem,5.2vw,3.6rem)] font-extrabold leading-[1.08] tracking-tight text-ink">
+              <h1 className="text-[clamp(2.4rem,5.2vw,3.6rem)] font-extrabold leading-[1.08] tracking-tight text-ink">
                 Let&rsquo;s find what you
                 <br />
                 are looking for.
               </h1>
               <p className="mt-4 max-w-[560px] text-[16.5px] leading-relaxed text-ink-soft">
-                Tell us what the spring has to do, or give us the exact dimensions if you have
-                them. Either way you end up at the assortment that contains it.
+                Not sure where to start? Describe the part and what it&rsquo;s for in your own
+                words. If you have exact dimensions, include those too. Let&rsquo;s see what fits
+                your project together!
               </p>
 
               <form
@@ -328,19 +325,10 @@ export function HomeView() {
                 </button>
               </form>
 
-              {/* Two ways in, shown side by side: the novice path is not the lesser one. */}
+              {/* Openers in a customer's own words — the way in for someone who has no spec. */}
               {phase === "idle" && (
-                <div className="mt-6 space-y-4">
-                  <StarterGroup
-                    label="Not sure what you need?"
-                    prompts={describePrompts}
-                    onPick={start}
-                  />
-                  <StarterGroup
-                    label="Know the spec already?"
-                    prompts={specPrompts}
-                    onPick={start}
-                  />
+                <div className="mt-6">
+                  <StarterGroup label="Search suggestions" prompts={describePrompts} onPick={start} />
                 </div>
               )}
 
@@ -378,7 +366,7 @@ export function HomeView() {
                 ? "Matching assortments"
                 : categoryLabel
                   ? `Assortments with ${categoryLabel.toLowerCase()}s`
-                  : "Every spring assortment"}
+                  : "All Kits"}
             </h2>
             <p className="mt-1.5 text-[14.5px] leading-relaxed text-muted">
               {showingResults

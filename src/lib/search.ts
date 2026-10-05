@@ -239,7 +239,9 @@ const SHAPE_TELLS: [RegExp, SpringAction][] = [
 ];
 
 const ACTION_WORDS: Record<SpringAction, string[]> = {
-  pull: ["pull", "pulls", "pulling", "pulled", "stretch", "stretches", "stretched", "stretchy", "stretching", "extend", "extends", "extending", "extension", "retract", "retracts", "draw together", "pulls together", "snap back", "bungee", "hook", "hooks", "hooked", "loop", "loops"],
+  // "close itself" and the like are the job an extension spring is bought for, and
+  // the words a customer reaches for before any of the pulling ones.
+  pull: ["close itself", "closes itself", "closing itself", "close by itself", "close on its own", "closes on its own", "shut itself", "shuts itself", "shut on its own", "self closing", "self close", "pull", "pulls", "pulling", "pulled", "stretch", "stretches", "stretched", "stretchy", "stretching", "extend", "extends", "extending", "extension", "retract", "retracts", "draw together", "pulls together", "snap back", "bungee", "hook", "hooks", "hooked", "loop", "loops"],
   push: ["push", "pushes", "pushing", "pushed", "compress", "compresses", "compressed", "compressing", "compression", "compressible", "squash", "squashes", "squashed", "squashy", "squeeze", "squeezes", "squeezed", "squish", "squishy", "press", "presses", "pressed", "pressing", "apart", "cushion", "absorb", "absorbs", "plunger", "button", "pen", "ballpoint", "biro", "click pen", "battery", "pops up", "pop up", "bounce", "bouncy", "pushes back", "spring back"],
   rotate: ["rotate", "rotates", "rotation", "rotating", "twist", "twists", "twisting", "twisted", "torsion", "torque", "hinge", "hinged", "hinges", "lever", "pivot", "swing", "swings", "flap", "lid", "clothes peg", "clothespin", "peg", "mousetrap", "mouse trap", "legs"],
 };
@@ -947,11 +949,8 @@ export const MEASURING_STEPS = [
  * is the test spring — a participant clicking one still has to describe their own.
  */
 export const STARTER_PROMPTS: { text: string; kind: "describe" | "spec" }[] = [
-  { text: "I have a spring and need more like it", kind: "describe" },
-  { text: "I need something to pull a door shut on its own", kind: "describe" },
-  { text: "The spring in my gate latch snapped", kind: "describe" },
-  { text: "I don't know how to measure it", kind: "describe" },
-  { text: "Extension spring, Ø10 × 70 mm, wire 1.2", kind: "spec" },
-  { text: "Compression spring, 25 mm free length, wire 1.0", kind: "spec" },
-  { text: "Die springs, ISO 10243 medium load", kind: "spec" },
+  { text: "I want to find a spring like mine", kind: "describe" },
+  { text: "I need a door to close itself", kind: "describe" },
+  { text: "My gate latch spring broke", kind: "describe" },
+  { text: "I don't know how to measure a spring", kind: "describe" },
 ];
