@@ -117,7 +117,7 @@ export function OrderDocument({ order, kind }: { order: Order; kind: DocumentKin
         </thead>
         <tbody>
           {order.lines.map((line) => (
-            <tr key={line.slug} className="border-b border-line">
+            <tr key={line.partNumber} className="border-b border-line">
               <td className="py-2.5 font-mono text-[11px] text-ink-soft">{line.partNumber}</td>
               <td className="py-2.5 font-semibold text-ink">{line.name}</td>
               <td className="py-2.5 text-right text-ink">{line.quantity}</td>

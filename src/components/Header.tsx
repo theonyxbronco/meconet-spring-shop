@@ -308,14 +308,14 @@ function CartPreview({ onNavigate }: { onNavigate: () => void }) {
           </p>
           <ul className="space-y-3">
             {cart.lines.map((line) => (
-              <li key={line.slug} className="flex items-center gap-3">
+              <li key={line.key} className="flex items-center gap-3">
                 <div className="h-12 w-16 shrink-0 overflow-hidden rounded-lg border border-line bg-brand-50 p-1">
                   <KitBoxArt kit={line.kit} className="h-full w-full" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[14px] font-semibold text-ink">{line.kit.name}</p>
+                  <p className="truncate text-[14px] font-semibold text-ink">{line.variant.name}</p>
                   <p className="text-[12.5px] text-muted">
-                    {line.quantity} × {formatEUR(line.kit.priceEUR)} · Part {line.kit.partNumber}
+                    {line.quantity} × {formatEUR(line.variant.priceEUR)} · Part {line.variant.partNumber}
                   </p>
                 </div>
                 <span className="text-[14px] font-semibold text-ink">{formatEUR(line.lineTotal)}</span>

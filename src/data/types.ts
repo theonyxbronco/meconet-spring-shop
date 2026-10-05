@@ -62,9 +62,30 @@ export interface KitProfile {
   keywords: string[];
 }
 
+/**
+ * Every kit is sold in two builds. Basic is the box on the lid art; Pro is the same
+ * box with the range extended at both ends, so the fields that differ between them —
+ * part number, price, compartment count and the springs inside — are the ones a Pro
+ * upgrade carries. Everything else (artwork, delivery, search profile) is shared.
+ */
+export type KitTier = "basic" | "pro";
+
+export interface KitUpgrade {
+  partNumber: string;
+  priceEUR: number;
+  compartments: number;
+  /** One line on what the extra money buys, shown beside the tier buttons. */
+  summary: string;
+  description: string;
+  /** The springs Pro adds on top of the Basic set, not the whole Pro contents. */
+  components: SpringComponent[];
+}
+
 export interface Kit {
   slug: string;
   name: string;
+  /** The kit without "Kit" on the end, so a build can be named "<family> Pro Kit". */
+  family: string;
   /** Lid label artwork, served from `public/kit-covers`. */
   coverImage: string;
   partNumber: string;
@@ -76,7 +97,10 @@ export interface Kit {
   compartments: number;
   profile: KitProfile;
   components: SpringComponent[];
+  pro: KitUpgrade;
 }
+
+export const TIER_LABEL: Record<KitTier, string> = { basic: "Basic", pro: "Pro" };
 
 export const SPRING_TYPE_LABEL: Record<SpringType, string> = {
   compression: "Compression spring",

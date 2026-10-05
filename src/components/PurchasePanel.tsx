@@ -4,11 +4,22 @@ import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { formatEUR, useCart } from "@/lib/cart";
 import { formatDistance, workshopsStocking } from "@/data/workshops";
-import type { Kit } from "@/data/types";
+import { TIER_LABEL, type Kit, type KitTier } from "@/data/types";
+import { kitVariant, pieceCount, type KitVariant } from "@/data/kits";
 import { LocalStockOverlay } from "./LocalStockOverlay";
 import { ArrowRightIcon, CheckIcon, MinusIcon, PinIcon, PlusIcon, TruckIcon } from "./icons";
 
-export function PurchasePanel({ kit }: { kit: Kit }) {
+export function PurchasePanel({
+  kit,
+  variant,
+  tier,
+  onTier,
+}: {
+  kit: Kit;
+  variant: KitVariant;
+  tier: KitTier;
+  onTier: (tier: KitTier) => void;
+}) {
   const cart = useCart();
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
@@ -17,17 +28,22 @@ export function PurchasePanel({ kit }: { kit: Kit }) {
   const nearby = useMemo(() => workshopsStocking(kit.slug), [kit.slug]);
 
   const addToOrder = () => {
-    cart.add(kit.slug, quantity);
+    cart.add(kit.slug, quantity, variant.tier);
     setAdded(true);
     setTimeout(() => setAdded(false), 2400);
   };
 
   return (
-    <aside className="rounded-xl border border-line bg-surface p-6 shadow-card">
-      <p className="text-[13.5px] text-muted">Part number:</p>
-      <p className="text-[30px] font-extrabold leading-tight tracking-tight text-ink">{kit.partNumber}</p>
+    <aside className="self-start rounded-xl border border-line bg-surface p-6 shadow-card">
+      <p className="text-[13.5px] text-muted">Product name:</p>
+      <p className="text-[26px] font-extrabold leading-tight tracking-tight text-ink">{variant.name}</p>
+      <p className="mt-1 text-[13px] text-muted">Part number {variant.partNumber}</p>
 
-      <p className="mt-4 flex items-center gap-2.5 text-[15px] font-semibold text-stock">
+      {/* The build belongs with the rest of what is being bought: it is the same choice
+          as the quantity below it, and it decides the name and the price above it. */}
+      <TierSwitch kit={kit} tier={tier} onTier={onTier} />
+
+      <p className="mt-5 flex items-center gap-2.5 text-[15px] font-semibold text-stock">
         <span className="h-2.5 w-2.5 rounded-full bg-stock" />
         {kit.inStock ? "In Stock" : "Made to order"}
       </p>
@@ -38,7 +54,7 @@ export function PurchasePanel({ kit }: { kit: Kit }) {
 
       <p className="mt-5 text-[14px] text-muted">
         Price per assortment
-        <span className="ml-2 text-[20px] font-bold text-ink">{formatEUR(kit.priceEUR)}</span>
+        <span className="ml-2 text-[20px] font-bold text-ink">{formatEUR(variant.priceEUR)}</span>
       </p>
 
       <div className="mt-5">
@@ -93,8 +109,7 @@ export function PurchasePanel({ kit }: { kit: Kit }) {
       </motion.button>
 
       <p className="mt-3 text-center text-[13px] text-muted">
-        {kit.components.length} spring types ·{" "}
-        {kit.components.reduce((total, component) => total + component.quantity, 0)} pieces per box
+        {variant.components.length} spring types · {pieceCount(variant.components)} pieces per box
       </p>
 
       {/*
@@ -128,5 +143,62 @@ export function PurchasePanel({ kit }: { kit: Kit }) {
         )}
       </AnimatePresence>
     </aside>
+  );
+}
+
+/**
+ * Basic or Pro.
+ *
+ * Both are the same kit in a bigger box, so the two sit side by side with their own
+ * price and piece count: the upgrade can be judged without switching to it first.
+ */
+function TierSwitch({
+  kit,
+  tier,
+  onTier,
+}: {
+  kit: Kit;
+  tier: KitTier;
+  onTier: (tier: KitTier) => void;
+}) {
+  const options: KitTier[] = ["basic", "pro"];
+
+  return (
+    <div className="mt-4">
+      <p className="text-[13.5px] font-semibold text-ink">Build</p>
+      <div role="group" aria-label="Kit build" className="mt-2 grid grid-cols-2 gap-2">
+        {options.map((option) => {
+          const build = kitVariant(kit, option);
+          const active = option === tier;
+          return (
+            <button
+              key={option}
+              onClick={() => onTier(option)}
+              aria-pressed={active}
+              className={`rounded-lg border-2 px-3 py-2.5 text-left transition ${
+                active
+                  ? "border-brand-500 bg-brand-50/70"
+                  : "border-line hover:border-brand-200"
+              }`}
+            >
+              <span className={`block text-[14.5px] font-bold ${active ? "text-brand-600" : "text-ink"}`}>
+                {TIER_LABEL[option]}
+              </span>
+              <span className="mt-0.5 block text-[14px] font-bold text-ink">
+                {formatEUR(build.priceEUR)}
+              </span>
+              <span className="mt-0.5 block text-[11.5px] leading-tight text-muted">
+                {build.components.length} types · {pieceCount(build.components)} pcs
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <p className="mt-2 text-[12.5px] leading-relaxed text-muted">
+        {tier === "pro"
+          ? kit.pro.summary
+          : `Pro adds ${kit.pro.components.length} more sizes for ${formatEUR(kit.pro.priceEUR - kit.priceEUR)}.`}
+      </p>
+    </div>
   );
 }

@@ -208,3 +208,11 @@ export const DrawingIcon: Icon = (p) => (
     <path d="m9 13.4-2 1.6 2 1.6M15 13.4l2 1.6-2 1.6" />
   </svg>
 );
+
+/** A rail of cards: the alternative to the grid, in the Included springs switch. */
+export const CarouselIcon: Icon = (p) => (
+  <svg {...base(p)}>
+    <rect x="8" y="6" width="8" height="12" rx="1.4" />
+    <path d="M4 8v8M20 8v8" />
+  </svg>
+);

@@ -70,7 +70,7 @@ export function OrderRecord({ order }: { order: Order }) {
           </thead>
           <tbody>
             {order.lines.map((line) => (
-              <tr key={line.slug} className="border-b border-line">
+              <tr key={line.partNumber} className="border-b border-line">
                 <td className="py-3">
                   <span className="block font-semibold text-ink">{line.name}</span>
                   <span className="block text-[12.5px] text-muted">{line.partNumber}</span>

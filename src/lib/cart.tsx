@@ -1,16 +1,21 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { kitBySlug } from "@/data/kits";
-import type { Kit } from "@/data/types";
+import { kitBySlug, kitVariant, type KitVariant } from "@/data/kits";
+import type { Kit, KitTier } from "@/data/types";
 
 interface CartItem {
   slug: string;
+  /** Basic and Pro are separate products: separate part numbers, separate prices. */
+  tier: KitTier;
   quantity: number;
 }
 
 interface CartLine extends CartItem {
+  /** Identifies the line, since one kit can be in the cart as both builds. */
+  key: string;
   kit: Kit;
+  variant: KitVariant;
   lineTotal: number;
 }
 
@@ -20,12 +25,14 @@ interface CartValue {
   count: number;
   subtotal: number;
   /** Bumps on every add, so the header badge and preview can react. */
-  lastAdded: { slug: string; quantity: number; at: number } | null;
-  add: (slug: string, quantity: number) => void;
-  setQuantity: (slug: string, quantity: number) => void;
-  remove: (slug: string) => void;
+  lastAdded: { slug: string; tier: KitTier; quantity: number; at: number } | null;
+  add: (slug: string, quantity: number, tier?: KitTier) => void;
+  setQuantity: (key: string, quantity: number) => void;
+  remove: (key: string) => void;
   clear: () => void;
 }
+
+const lineKey = (slug: string, tier: KitTier) => `${slug}:${tier}`;
 
 const CartContext = createContext<CartValue | null>(null);
 const STORAGE_KEY = "meconet-cart";
@@ -38,7 +45,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) setItems(JSON.parse(raw));
+      // Carts saved before the Pro build existed hold no tier, and are all Basic.
+      if (raw) {
+        const saved = JSON.parse(raw) as Array<Partial<CartItem>>;
+        setItems(
+          saved.flatMap((item) =>
+            item.slug ? [{ slug: item.slug, tier: item.tier ?? "basic", quantity: item.quantity ?? 1 }] : [],
+          ),
+        );
+      }
     } catch {
       // A fresh cart is a perfectly good fallback.
     }
@@ -54,29 +69,31 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [items, hydrated]);
 
-  const add = useCallback((slug: string, quantity: number) => {
+  const add = useCallback((slug: string, quantity: number, tier: KitTier = "basic") => {
     setItems((current) => {
-      const existing = current.find((item) => item.slug === slug);
+      const existing = current.find((item) => item.slug === slug && item.tier === tier);
       if (existing) {
         return current.map((item) =>
-          item.slug === slug ? { ...item, quantity: item.quantity + quantity } : item,
+          item.slug === slug && item.tier === tier ? { ...item, quantity: item.quantity + quantity } : item,
         );
       }
-      return [...current, { slug, quantity }];
+      return [...current, { slug, tier, quantity }];
     });
-    setLastAdded({ slug, quantity, at: Date.now() });
+    setLastAdded({ slug, tier, quantity, at: Date.now() });
   }, []);
 
-  const setQuantity = useCallback((slug: string, quantity: number) => {
+  const setQuantity = useCallback((key: string, quantity: number) => {
     setItems((current) =>
       quantity <= 0
-        ? current.filter((item) => item.slug !== slug)
-        : current.map((item) => (item.slug === slug ? { ...item, quantity } : item)),
+        ? current.filter((item) => lineKey(item.slug, item.tier) !== key)
+        : current.map((item) =>
+            lineKey(item.slug, item.tier) === key ? { ...item, quantity } : item,
+          ),
     );
   }, []);
 
-  const remove = useCallback((slug: string) => {
-    setItems((current) => current.filter((item) => item.slug !== slug));
+  const remove = useCallback((key: string) => {
+    setItems((current) => current.filter((item) => lineKey(item.slug, item.tier) !== key));
   }, []);
 
   const clear = useCallback(() => setItems([]), []);
@@ -84,7 +101,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<CartValue>(() => {
     const lines = items.flatMap((item) => {
       const kit = kitBySlug(item.slug);
-      return kit ? [{ ...item, kit, lineTotal: kit.priceEUR * item.quantity }] : [];
+      if (!kit) return [];
+      const variant = kitVariant(kit, item.tier);
+      return [
+        {
+          ...item,
+          key: lineKey(item.slug, item.tier),
+          kit,
+          variant,
+          lineTotal: variant.priceEUR * item.quantity,
+        },
+      ];
     });
     return {
       items,

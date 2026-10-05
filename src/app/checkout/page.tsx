@@ -44,10 +44,10 @@ export default function CheckoutPage() {
     const order = orders.place({
       lines: cart.lines.map((line) => ({
         slug: line.slug,
-        name: line.kit.name,
-        partNumber: line.kit.partNumber,
+        name: line.variant.name,
+        partNumber: line.variant.partNumber,
         quantity: line.quantity,
-        unitPriceEUR: line.kit.priceEUR,
+        unitPriceEUR: line.variant.priceEUR,
       })),
       buyerReference: buyerReference.trim(),
       costCentre: costCentre.trim(),
@@ -200,12 +200,12 @@ export default function CheckoutPage() {
             <h2 className="text-[20px] font-bold text-ink">Your order</h2>
             <ul className="mt-5 space-y-4">
               {cart.lines.map((line) => (
-                <li key={line.slug} className="flex items-center gap-3">
+                <li key={line.key} className="flex items-center gap-3">
                   <div className="h-12 w-16 shrink-0 rounded-lg bg-brand-50 p-1">
                     <KitBoxArt kit={line.kit} className="h-full w-full" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[14.5px] font-semibold text-ink">{line.kit.name}</p>
+                    <p className="truncate text-[14.5px] font-semibold text-ink">{line.variant.name}</p>
                     <p className="text-[12.5px] text-muted">Quantity {line.quantity}</p>
                   </div>
                   <span className="text-[14.5px] font-semibold text-ink">{formatEUR(line.lineTotal)}</span>

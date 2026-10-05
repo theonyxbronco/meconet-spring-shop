@@ -5,13 +5,15 @@ import { SpringPhoto } from "@/assets/brand";
 import { SPRING_TYPE_LABEL, type SpringComponent } from "@/data/types";
 import { ChevronLeftIcon, ChevronRightIcon } from "./icons";
 
-export function ComponentCarousel({
-  title,
+/**
+ * The springs in a kit as one scrolling row. The section around it — heading, counts
+ * and the switch to the grid — belongs to `IncludedSprings`, which owns both views.
+ */
+export function SpringRail({
   components,
   selectedId,
   onSelect,
 }: {
-  title: string;
   components: SpringComponent[];
   selectedId: string;
   onSelect: (component: SpringComponent) => void;
@@ -58,63 +60,52 @@ export function ComponentCarousel({
   };
 
   return (
-    <section id="included-springs" className="border-y border-line bg-brand-50/60 py-6">
-      <div className="mx-auto max-w-[1320px] px-5">
-        <div className="flex items-baseline justify-between gap-4">
-          <h2 className="text-[19px] font-extrabold tracking-tight text-ink">{title}</h2>
-          <p className="shrink-0 text-[13px] text-muted">
-            {components.length} springs · pick one to see it below
-          </p>
-        </div>
+    <div className="relative mt-4">
+      <ArrowButton side="left" disabled={atStart} onClick={() => nudge(-1)} />
+      <ArrowButton side="right" disabled={atEnd} onClick={() => nudge(1)} />
 
-        <div className="relative mt-3">
-          <ArrowButton side="left" disabled={atStart} onClick={() => nudge(-1)} />
-          <ArrowButton side="right" disabled={atEnd} onClick={() => nudge(1)} />
-
-          <div
-            ref={scroller}
-            className="no-scrollbar flex gap-2.5 overflow-x-auto scroll-smooth px-1 py-1"
-            role="listbox"
-            aria-label="Springs included in this assortment"
-          >
-            {components.map((component) => {
-              const active = component.id === selectedId;
-              return (
-                <button
-                  key={component.id}
-                  ref={(node) => {
-                    if (node) cards.current.set(component.id, node);
-                    else cards.current.delete(component.id);
-                  }}
-                  role="option"
-                  aria-selected={active}
-                  title={`${component.code} — ${SPRING_TYPE_LABEL[component.type]}, Ø${component.outerDiameter} × ${component.freeLength} mm`}
-                  onClick={() => onSelect(component)}
-                  className={`flex w-[124px] shrink-0 flex-col items-center rounded-lg border-2 bg-surface px-2 py-2 text-center transition ${
-                    active
-                      ? "border-brand-500 shadow-card"
-                      : "border-transparent shadow-card hover:border-brand-200"
-                  }`}
-                >
-                  {component.isTestTarget && <span className="sr-only">Reference component</span>}
-                  <div className="flex h-[52px] w-full items-center justify-center">
-                    <SpringPhoto spring={component} className="h-full w-full" sizes="124px" />
-                  </div>
-                  <p
-                    className={`mt-1.5 w-full truncate text-[11.5px] font-bold leading-tight ${
-                      active ? "text-brand-600" : "text-ink"
-                    }`}
-                  >
-                    {component.code}
-                  </p>
-                  <p className="text-[11px] text-muted">{component.quantity} pcs</p>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+      <div
+        ref={scroller}
+        className="no-scrollbar flex gap-2.5 overflow-x-auto scroll-smooth px-1 py-1"
+        role="listbox"
+        aria-label="Springs included in this assortment"
+      >
+        {components.map((component) => {
+          const active = component.id === selectedId;
+          return (
+            <button
+              key={component.id}
+              ref={(node) => {
+                if (node) cards.current.set(component.id, node);
+                else cards.current.delete(component.id);
+              }}
+              role="option"
+              aria-selected={active}
+              title={`${component.code} — ${SPRING_TYPE_LABEL[component.type]}, Ø${component.outerDiameter} × ${component.freeLength} mm`}
+              onClick={() => onSelect(component)}
+              className={`flex w-[124px] shrink-0 flex-col items-center rounded-lg border-2 bg-surface px-2 py-2 text-center transition ${
+                active
+                  ? "border-brand-500 shadow-card"
+                  : "border-transparent shadow-card hover:border-brand-200"
+              }`}
+            >
+              {component.isTestTarget && <span className="sr-only">Reference component</span>}
+              <div className="flex h-[52px] w-full items-center justify-center">
+                <SpringPhoto spring={component} className="h-full w-full" sizes="124px" />
+              </div>
+              <p
+                className={`mt-1.5 w-full truncate text-[11.5px] font-bold leading-tight ${
+                  active ? "text-brand-600" : "text-ink"
+                }`}
+              >
+                {component.code}
+              </p>
+              <p className="text-[11px] text-muted">{component.quantity} pcs</p>
+            </button>
+          );
+        })}
       </div>
-    </section>
+    </div>
   );
 }
 

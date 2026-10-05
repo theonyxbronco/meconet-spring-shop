@@ -36,7 +36,7 @@ export default function CartPage() {
           <ul className="space-y-4">
             {cart.lines.map((line) => (
               <li
-                key={line.slug}
+                key={line.key}
                 className="flex flex-wrap items-center gap-5 rounded-card border border-line bg-surface p-5"
               >
                 <div className="h-[86px] w-[120px] shrink-0 rounded-lg bg-brand-50 p-2">
@@ -45,12 +45,12 @@ export default function CartPage() {
 
                 <div className="min-w-[180px] flex-1">
                   <Link
-                    href={`/assortments/${line.kit.slug}`}
+                    href={`/assortments/${line.kit.slug}?tier=${line.tier}`}
                     className="text-[18px] font-bold text-ink hover:text-brand-600"
                   >
-                    {line.kit.name}
+                    {line.variant.name}
                   </Link>
-                  <p className="mt-1 text-[13.5px] text-muted">Part number {line.kit.partNumber}</p>
+                  <p className="mt-1 text-[13.5px] text-muted">Part number {line.variant.partNumber}</p>
                   <p className="mt-1.5 flex items-center gap-2 text-[13.5px] text-stock">
                     <TruckIcon width={17} height={17} />
                     In stock · {line.kit.deliveryDays}
@@ -59,16 +59,16 @@ export default function CartPage() {
 
                 <div className="flex items-center rounded-lg border border-line-strong">
                   <button
-                    onClick={() => cart.setQuantity(line.slug, line.quantity - 1)}
-                    aria-label={`Decrease quantity of ${line.kit.name}`}
+                    onClick={() => cart.setQuantity(line.key, line.quantity - 1)}
+                    aria-label={`Decrease quantity of ${line.variant.name}`}
                     className="flex h-10 w-10 items-center justify-center text-ink hover:text-brand-600"
                   >
                     <MinusIcon width={16} height={16} />
                   </button>
                   <span className="w-11 text-center text-[15px] font-semibold">{line.quantity}</span>
                   <button
-                    onClick={() => cart.setQuantity(line.slug, line.quantity + 1)}
-                    aria-label={`Increase quantity of ${line.kit.name}`}
+                    onClick={() => cart.setQuantity(line.key, line.quantity + 1)}
+                    aria-label={`Increase quantity of ${line.variant.name}`}
                     className="flex h-10 w-10 items-center justify-center text-ink hover:text-brand-600"
                   >
                     <PlusIcon width={16} height={16} />
@@ -78,8 +78,8 @@ export default function CartPage() {
                 <p className="w-[92px] text-right text-[17px] font-bold text-ink">{formatEUR(line.lineTotal)}</p>
 
                 <button
-                  onClick={() => cart.remove(line.slug)}
-                  aria-label={`Remove ${line.kit.name} from cart`}
+                  onClick={() => cart.remove(line.key)}
+                  aria-label={`Remove ${line.variant.name} from cart`}
                   className="rounded-full p-2 text-muted transition hover:text-ink"
                 >
                   <CloseIcon width={18} height={18} />

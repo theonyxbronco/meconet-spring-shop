@@ -8,10 +8,10 @@ import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, ZoomIcon } from "./icons"
 
 type Slide = { key: string; label: string; spring?: SpringComponent };
 
-export function KitGallery({ kit }: { kit: Kit }) {
+export function KitGallery({ kit, components }: { kit: Kit; components: SpringComponent[] }) {
   const slides: Slide[] = [
     { key: "box", label: `${kit.name} assortment box` },
-    ...kit.components.map((spring) => ({
+    ...components.map((spring) => ({
       key: spring.id,
       label: `${spring.name}, ${spring.code}`,
       spring,
@@ -20,7 +20,8 @@ export function KitGallery({ kit }: { kit: Kit }) {
 
   const [index, setIndex] = useState(0);
   const [zoomed, setZoomed] = useState(false);
-  const active = slides[index];
+  // Switching to the shorter Basic list can leave the index past the end of it.
+  const active = slides[Math.min(index, slides.length - 1)];
   const rail = useRef<HTMLDivElement>(null);
 
   // The rail holds every spring in the kit, so it scrolls — stepping through with the
@@ -50,28 +51,37 @@ export function KitGallery({ kit }: { kit: Kit }) {
       <KitBoxArt kit={kit} className={className} />
     );
 
+  /*
+   * Every lid and every studio photograph is 3:2, so the stage is cut to 3:2 as well
+   * and the artwork reaches all four edges. The stage fills the column, which means
+   * its width sets its height — so the rail beside it is taken out of flow and
+   * stretched to whatever the stage works out to be, rather than being told a height
+   * of its own that would only match at one window size.
+   */
   return (
-    <div className="flex gap-4">
-      <div
-        ref={rail}
-        className="no-scrollbar flex max-h-[364px] w-[74px] shrink-0 flex-col gap-3 overflow-y-auto"
-      >
-        {slides.map((slide, slideIndex) => (
-          <button
-            key={slide.key}
-            onClick={() => setIndex(slideIndex)}
-            aria-label={`Show ${slide.label}`}
-            aria-current={slideIndex === index}
-            className={`flex h-[62px] shrink-0 items-center justify-center rounded-lg border-2 bg-surface p-1.5 transition ${
-              slideIndex === index ? "border-brand-500" : "border-line hover:border-brand-100"
-            }`}
-          >
-            {render(slide, "h-full w-full")}
-          </button>
-        ))}
+    <div className="grid grid-cols-[64px_minmax(0,1fr)] gap-5">
+      <div className="relative">
+        <div
+          ref={rail}
+          className="no-scrollbar absolute inset-0 flex flex-col gap-2.5 overflow-y-auto"
+        >
+          {slides.map((slide, slideIndex) => (
+            <button
+              key={slide.key}
+              onClick={() => setIndex(slideIndex)}
+              aria-label={`Show ${slide.label}`}
+              aria-current={slides[slideIndex].key === active.key}
+              className={`flex h-[60px] shrink-0 items-center justify-center rounded-lg border-2 bg-surface p-1.5 transition ${
+                slides[slideIndex].key === active.key ? "border-brand-500" : "border-line hover:border-brand-100"
+              }`}
+            >
+              {render(slide, "h-full w-full")}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="relative flex-1 overflow-hidden rounded-xl bg-gradient-to-b from-brand-50 to-brand-50/40 p-8">
+      <div className="relative aspect-[3/2] min-w-0 overflow-hidden rounded-xl bg-gradient-to-b from-brand-50 to-brand-50/40">
         <AnimatePresence mode="wait">
           <motion.div
             key={active.key}
@@ -79,7 +89,7 @@ export function KitGallery({ kit }: { kit: Kit }) {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
             transition={{ duration: 0.2 }}
-            className="flex h-[300px] items-center justify-center"
+            className="absolute inset-0"
           >
             {render(active, "h-full w-full")}
           </motion.div>
@@ -103,19 +113,19 @@ export function KitGallery({ kit }: { kit: Kit }) {
         <button
           onClick={() => setZoomed(true)}
           aria-label="Enlarge image"
-          className="absolute bottom-4 right-4 flex h-9 w-9 items-center justify-center rounded-full bg-surface/80 text-ink transition hover:text-brand-600"
+          className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-surface/80 text-ink transition hover:text-brand-600"
         >
           <ZoomIcon width={19} height={19} />
         </button>
 
-        <div className="absolute bottom-5 left-1/2 flex -translate-x-1/2 gap-2">
+        <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2">
           {slides.map((slide, slideIndex) => (
             <button
               key={slide.key}
               onClick={() => setIndex(slideIndex)}
               aria-label={`Go to image ${slideIndex + 1}`}
               className={`h-2 w-2 rounded-full transition ${
-                slideIndex === index ? "bg-brand-500" : "bg-brand-500/30"
+                slides[slideIndex].key === active.key ? "bg-brand-500" : "bg-brand-500/30"
               }`}
             />
           ))}

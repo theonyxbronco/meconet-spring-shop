@@ -25,7 +25,7 @@ const SpringViewer = dynamic(() => import("./SpringViewer"), {
   ),
 });
 
-type Panel = "specifications" | "drawing" | "notes" | "identify" | "files";
+type Panel = "specifications" | "notes" | "identify" | "files";
 type Mode = "3d" | "image" | "drawing";
 
 export function ComponentDetail({ spring }: { spring: SpringComponent }) {
@@ -134,32 +134,9 @@ export function ComponentDetail({ spring }: { spring: SpringComponent }) {
               </div>
               <p className="mt-3 text-[13px] text-muted">
                 Derived from the catalogue geometry. Tolerances to EN 15800 unless otherwise agreed.
+                The symbols in the Ref. column are the ones the Drawing view is annotated with, so
+                a dimension read off the sheet can be looked up here directly.
               </p>
-            </Accordion>
-
-            <Accordion
-              title="Technical drawing"
-              open={open === "drawing"}
-              onToggle={() => toggle("drawing")}
-            >
-              <div className="rounded-lg border border-line bg-white p-3">
-                {sheets.length > 0 ? (
-                  <SheetImage spring={spring} src={sheets[0]} className="h-[230px]" sizes="620px" />
-                ) : (
-                  <TechnicalDrawing spring={spring} />
-                )}
-              </div>
-              <p className="mt-3 text-[13px] text-muted">
-                The symbols on the sheet — <SheetSymbols spring={spring} /> — are the same ones
-                in the Ref. column of the specification table above, so a dimension you read off
-                the drawing can be looked up directly.
-              </p>
-              <button
-                onClick={() => setMode("drawing")}
-                className="mt-3 text-[14px] font-semibold text-brand-600 underline decoration-brand-100 decoration-2 underline-offset-4 hover:decoration-brand-400"
-              >
-                Open it larger in the Drawing view →
-              </button>
             </Accordion>
 
             <Accordion
@@ -242,31 +219,6 @@ export function ComponentDetail({ spring }: { spring: SpringComponent }) {
   );
 }
 
-/** One drawing sheet, letterboxed on white the way a PDF sheet would be. */
-function SheetImage({
-  spring,
-  src,
-  className = "",
-  sizes,
-}: {
-  spring: SpringComponent;
-  src: string;
-  className?: string;
-  sizes: string;
-}) {
-  return (
-    <div className={`relative w-full ${className}`}>
-      <Image
-        src={src}
-        alt={`Dimensioned drawing of ${spring.name}, ${spring.code}`}
-        fill
-        sizes={sizes}
-        className="object-contain"
-      />
-    </div>
-  );
-}
-
 /**
  * The Drawing view.
  *
@@ -340,25 +292,6 @@ function DrawingPane({
         </div>
       )}
     </div>
-  );
-}
-
-/** The dimension symbols this spring's sheets are annotated with. */
-function SheetSymbols({ spring }: { spring: SpringComponent }) {
-  const symbols =
-    spring.type === "torsion"
-      ? ["d", "Do", "Di", "L1", "L2", "θ"]
-      : ["d", "Do", "Di", "L0", "p"];
-
-  return (
-    <>
-      {symbols.map((symbol, index) => (
-        <span key={symbol}>
-          {index > 0 && ", "}
-          <em className="font-medium not-italic text-ink">{symbol}</em>
-        </span>
-      ))}
-    </>
   );
 }
 
