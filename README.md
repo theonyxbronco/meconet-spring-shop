@@ -2,6 +2,7 @@
 
 A clickable prototype of the Meconet spring assortment shop, built for a moderated
 usability test. Everything runs locally from mock data: no backend, no API keys, no network.
+Alternatively, you can also visit the site here for a live demo: https://meconet-springshop.netlify.app.
 
 ```bash
 npm install
