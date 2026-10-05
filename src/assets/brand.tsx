@@ -3,8 +3,9 @@
  * Every piece of imagery in the prototype is resolved here, so swapping artwork
  * is a change to this one file:
  *
- *   Wordmark   → swap the <text> for <Image src="/meconet-logo.svg" …>
+ *   Wordmark   → the meconet lockup from `public/meconet_logo.png`
  *   KitBoxArt  → the kit's lid label from `public/kit-covers`, named on the kit
+ *   KitShot    → any further photograph of the kit, listed on the kit
  *   SpringPhoto→ the component's studio photograph, when `kits.ts` gives it one,
  *                otherwise the generated SpringArt below
  *   SpringArt  → generated from each spring's real dimensions, so it stays
@@ -17,17 +18,27 @@
 import Image from "next/image";
 import { useId } from "react";
 import { springProfile } from "@/lib/springProfile";
-import type { Kit, SpringComponent } from "@/data/types";
+import type { Kit, KitPhoto, SpringComponent } from "@/data/types";
 
+/**
+ * The meconet wordmark, from `public/meconet_logo.png`. The artwork is drawn in
+ * white on transparency, which is right for the navy header and footer; `tone="dark"`
+ * inverts it to near-black for the printed order sheets. It stays an <img> rather
+ * than a tinted mask because a mask is a background graphic, and the print dialog
+ * drops those by default — the letterhead has to survive being put on paper.
+ *
+ * The lockup has one shape, so callers give it a width and the height follows.
+ */
 export function Wordmark({ className = "", tone = "light" }: { className?: string; tone?: "light" | "dark" }) {
   return (
-    <span
-      className={`select-none font-extrabold tracking-[-0.045em] lowercase ${
-        tone === "light" ? "text-white" : "text-navy-900"
-      } ${className}`}
-    >
-      meconet
-    </span>
+    <Image
+      src="/meconet_logo.png"
+      alt="meconet"
+      width={242}
+      height={31}
+      priority
+      className={`h-auto select-none ${tone === "light" ? "" : "invert"} ${className}`}
+    />
   );
 }
 
@@ -120,13 +131,52 @@ export function SpringPhoto({
   );
 }
 
-/** The kit's printed lid label — the artwork a customer recognises on the shelf. */
-export function KitBoxArt({ kit, className = "" }: { kit: Kit; className?: string }) {
+/**
+ * The kit's printed lid label — the artwork a customer recognises on the shelf.
+ * `art="thumbnail"` picks the tighter crop, which is what survives being drawn at
+ * the size of a result card or a cart line; the full lid is for the big stages.
+ */
+export function KitBoxArt({
+  kit,
+  className = "",
+  art = "cover",
+  fit = "contain",
+}: {
+  kit: Kit;
+  className?: string;
+  art?: "cover" | "thumbnail";
+  /**
+   * `contain` floats the lid on whatever is behind it, which is what a gallery
+   * stage or a cart line wants. `fit="cover"` instead fills its box edge to edge,
+   * for the card that is meant to *be* the picture — so the lifted-off-the-page
+   * shadow and the corner radius come off with it.
+   */
+  fit?: "contain" | "cover";
+}) {
   return (
     <div className={`relative ${className}`}>
       <Image
-        src={kit.coverImage}
+        src={art === "thumbnail" ? kit.thumbnailImage : kit.coverImage}
         alt={`${kit.name} assortment box`}
+        fill
+        sizes={art === "thumbnail" ? "(max-width: 768px) 45vw, 300px" : "(max-width: 768px) 90vw, 420px"}
+        className={
+          fit === "cover"
+            ? "object-cover"
+            : "rounded-[6px] object-contain drop-shadow-[0_6px_18px_rgba(11,46,94,0.18)]"
+        }
+      />
+    </div>
+  );
+}
+
+/** A further photograph of the kit itself — the open box, a layout shot. */
+export function KitShot({ photo, className = "" }: { photo: KitPhoto; className?: string }) {
+  return (
+    <div className={`relative ${className}`}>
+      <Image
+        src={photo.src}
+        alt={photo.label}
         fill
         sizes="(max-width: 768px) 90vw, 420px"
         className="rounded-[6px] object-contain drop-shadow-[0_6px_18px_rgba(11,46,94,0.18)]"

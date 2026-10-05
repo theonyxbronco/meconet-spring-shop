@@ -60,7 +60,7 @@ export function KitDetail({ kit }: { kit: Kit }) {
               {variant.description}
             </p>
             <div className="mt-7">
-              <KitGallery kit={kit} components={variant.components} />
+              <KitGallery kit={kit} components={variant.components} tier={tier} />
             </div>
           </div>
 

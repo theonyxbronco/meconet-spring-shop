@@ -2,15 +2,29 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { KitBoxArt, SpringPhoto } from "@/assets/brand";
-import type { Kit, SpringComponent } from "@/data/types";
+import { KitBoxArt, KitShot, SpringPhoto } from "@/assets/brand";
+import type { Kit, KitPhoto, KitTier, SpringComponent } from "@/data/types";
 import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, ZoomIcon } from "./icons";
 
-type Slide = { key: string; label: string; spring?: SpringComponent };
+type Slide = { key: string; label: string; spring?: SpringComponent; photo?: KitPhoto };
 
-export function KitGallery({ kit, components }: { kit: Kit; components: SpringComponent[] }) {
+export function KitGallery({
+  kit,
+  components,
+  tier,
+}: {
+  kit: Kit;
+  components: SpringComponent[];
+  tier: KitTier;
+}) {
+  // The kit's own photographs follow the lid, before the springs are shown one by
+  // one. A photograph of one build's contents is wrong for the other, so a shot
+  // that names a tier only appears on that tier.
+  const shots = (kit.galleryImages ?? []).filter((photo) => !photo.tier || photo.tier === tier);
+
   const slides: Slide[] = [
     { key: "box", label: `${kit.name} assortment box` },
+    ...shots.map((photo) => ({ key: photo.src, label: photo.label, photo })),
     ...components.map((spring) => ({
       key: spring.id,
       label: `${spring.name}, ${spring.code}`,
@@ -47,13 +61,16 @@ export function KitGallery({ kit, components }: { kit: Kit; components: SpringCo
   const render = (slide: Slide, className: string) =>
     slide.spring ? (
       <SpringPhoto spring={slide.spring} className={className} />
+    ) : slide.photo ? (
+      <KitShot photo={slide.photo} className={className} />
     ) : (
       <KitBoxArt kit={kit} className={className} />
     );
 
   /*
    * Every lid and every studio photograph is 3:2, so the stage is cut to 3:2 as well
-   * and the artwork reaches all four edges. The stage fills the column, which means
+   * and that artwork reaches all four edges; anything squarer is contained inside it
+   * rather than cropped. The stage fills the column, which means
    * its width sets its height — so the rail beside it is taken out of flow and
    * stretched to whatever the stage works out to be, rather than being told a height
    * of its own that would only match at one window size.

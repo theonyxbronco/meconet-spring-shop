@@ -24,7 +24,7 @@ export function KitCard({
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-card border border-line bg-surface shadow-card transition hover:-translate-y-0.5 hover:border-line-strong hover:shadow-pop">
-      <div className="relative m-3 mb-0 overflow-hidden rounded-xl bg-brand-50/70 p-5">
+      <div className="relative bg-brand-50/70">
         <span className="absolute left-3 top-3 z-10 flex items-center gap-1.5 rounded-full bg-stock-bg px-2.5 py-1 text-[12px] font-semibold text-stock">
           <span className="h-1.5 w-1.5 rounded-full bg-stock" />
           In stock
@@ -33,11 +33,11 @@ export function KitCard({
           onClick={() => setSaved((value) => !value)}
           aria-label={saved ? `Remove ${kit.name} from favourites` : `Save ${kit.name} to favourites`}
           aria-pressed={saved}
-          className={`absolute right-3 top-3 z-10 transition ${saved ? "text-brand-500" : "text-ink/45 hover:text-brand-500"}`}
+          className={`absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-surface/85 backdrop-blur-sm transition ${saved ? "text-brand-500" : "text-ink/55 hover:text-brand-500"}`}
         >
           <HeartIcon width={22} height={22} fill={saved ? "currentColor" : "none"} />
         </button>
-        <KitBoxArt kit={kit} className="mx-auto h-[170px] w-full transition duration-500 group-hover:scale-[1.03]" />
+        <KitBoxArt kit={kit} art="thumbnail" fit="cover" className="aspect-[3/2] w-full transition duration-500 group-hover:scale-[1.03]" />
       </div>
 
       <div className="flex flex-1 flex-col p-5">

@@ -46,7 +46,7 @@ export function OrderDocument({ order, kind }: { order: Order; kind: DocumentKin
     <article className="doc-sheet">
       <header className="flex items-start justify-between gap-8 border-b-2 border-ink pb-5">
         <div>
-          <Wordmark tone="dark" className="h-7 w-auto" />
+          <Wordmark tone="dark" className="w-[64px]" />
           <p className="mt-3 text-[11px] leading-relaxed text-ink-soft">
             {SELLER.name}
             <br />

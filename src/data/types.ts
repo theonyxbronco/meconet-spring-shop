@@ -81,13 +81,21 @@ export interface KitUpgrade {
   components: SpringComponent[];
 }
 
+export interface KitPhoto {
+  src: string;
+  label: string;
+  tier?: KitTier;
+}
+
 export interface Kit {
   slug: string;
   name: string;
   /** The kit without "Kit" on the end, so a build can be named "<family> Pro Kit". */
   family: string;
-  /** Lid label artwork, served from `public/kit-covers`. */
+  /** Lid artwork at full size, served from `public/kit-covers`. */
   coverImage: string;
+  /** The same lid, cropped tighter for the small art on cards and cart lines. */
+  thumbnailImage: string;
   partNumber: string;
   shortText: string;
   description: string;
@@ -97,6 +105,8 @@ export interface Kit {
   compartments: number;
   profile: KitProfile;
   components: SpringComponent[];
+  /** Photographs shown after the lid in the gallery; `tier` pins one to a build. */
+  galleryImages?: KitPhoto[];
   pro: KitUpgrade;
 }
 

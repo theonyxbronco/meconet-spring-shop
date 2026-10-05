@@ -79,7 +79,7 @@ export function Header() {
         <div className="relative z-10 bg-navy-900 text-white">
           <div className="mx-auto flex h-16 max-w-[1320px] items-center gap-4 px-5">
             <Link href="/" className="flex shrink-0 items-center gap-4">
-              <Wordmark className="text-[26px] leading-none" />
+              <Wordmark className="w-[124px]" />
               <span className="hidden h-6 w-px bg-white/30 sm:block" aria-hidden />
               <span className="hidden text-[15px] font-medium text-white/95 sm:block">Spring Shop</span>
             </Link>
@@ -310,7 +310,7 @@ function CartPreview({ onNavigate }: { onNavigate: () => void }) {
             {cart.lines.map((line) => (
               <li key={line.key} className="flex items-center gap-3">
                 <div className="h-12 w-16 shrink-0 overflow-hidden rounded-lg border border-line bg-brand-50 p-1">
-                  <KitBoxArt kit={line.kit} className="h-full w-full" />
+                  <KitBoxArt kit={line.kit} art="thumbnail" className="h-full w-full" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[14px] font-semibold text-ink">{line.variant.name}</p>

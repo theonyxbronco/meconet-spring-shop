@@ -18,7 +18,7 @@ export function Footer() {
 
       <div className="relative mx-auto grid max-w-[1320px] gap-10 px-5 py-14 md:grid-cols-[1.2fr_1fr_auto]">
         <div>
-          <Wordmark className="text-[34px] leading-none" />
+          <Wordmark className="w-[130px]" />
           <ul className="mt-7 space-y-3 text-[14px] text-white/85">
             <li className="flex gap-3">
               <PinIcon width={18} height={18} className="mt-0.5 shrink-0 text-white/70" />

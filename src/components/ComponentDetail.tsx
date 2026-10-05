@@ -33,7 +33,10 @@ export function ComponentDetail({ spring }: { spring: SpringComponent }) {
   // turn over, and it is generated from the same numbers as the table beside it.
   const [mode, setMode] = useState<Mode>("3d");
   const [actualSize, setActualSize] = useState(false);
-  const [open, setOpen] = useState<Panel | null>("specifications");
+  // Every panel opens and closes on its own: reading the specification while
+  // checking the identification notes against the part in hand is the normal way
+  // to use this page, and closing one panel to open another takes that away.
+  const [open, setOpen] = useState<Set<Panel>>(() => new Set<Panel>(["specifications"]));
   const [note, setNote] = useState<string | null>(null);
   const [sheet, setSheet] = useState(0);
 
@@ -42,7 +45,12 @@ export function ComponentDetail({ spring }: { spring: SpringComponent }) {
   // A different component may have fewer sheets than the one just shown.
   useEffect(() => setSheet(0), [spring.id]);
 
-  const toggle = (panel: Panel) => setOpen((current) => (current === panel ? null : panel));
+  const toggle = (panel: Panel) =>
+    setOpen((current) => {
+      const next = new Set(current);
+      if (!next.delete(panel)) next.add(panel);
+      return next;
+    });
 
   const flash = (message: string) => {
     setNote(message);
@@ -101,7 +109,7 @@ export function ComponentDetail({ spring }: { spring: SpringComponent }) {
           <div className="mt-7 space-y-3">
             <Accordion
               title="Technical specifications"
-              open={open === "specifications"}
+              open={open.has("specifications")}
               onToggle={() => toggle("specifications")}
             >
               <div className="overflow-x-auto">
@@ -141,7 +149,7 @@ export function ComponentDetail({ spring }: { spring: SpringComponent }) {
 
             <Accordion
               title="Notes on using this spring"
-              open={open === "notes"}
+              open={open.has("notes")}
               onToggle={() => toggle("notes")}
             >
               <ul className="space-y-2.5">
@@ -156,7 +164,7 @@ export function ComponentDetail({ spring }: { spring: SpringComponent }) {
 
             <Accordion
               title="How to identify this spring"
-              open={open === "identify"}
+              open={open.has("identify")}
               onToggle={() => toggle("identify")}
             >
               <ol className="space-y-3">
@@ -177,7 +185,7 @@ export function ComponentDetail({ spring }: { spring: SpringComponent }) {
               </button>
             </Accordion>
 
-            <Accordion title="CAD/PDF files" open={open === "files"} onToggle={() => toggle("files")}>
+            <Accordion title="CAD/PDF files" open={open.has("files")} onToggle={() => toggle("files")}>
               <ul className="space-y-2.5">
                 {[
                   { name: `${spring.code}.step`, size: "412 KB" },

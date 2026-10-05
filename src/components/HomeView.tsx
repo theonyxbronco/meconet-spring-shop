@@ -30,6 +30,13 @@ import { ArrowRightIcon, FilterIcon, SearchIcon } from "./icons";
 type Phase = "idle" | "asking" | "results";
 
 const THINKING_MS = 520;
+/**
+ * How long the answer stays put before the page scrolls down to the kits it found.
+ * Long enough to read the line that says what was picked — moving the page out from
+ * under that sentence while it is still being read is what makes the jump feel like
+ * a glitch rather than an answer.
+ */
+const RESULTS_SCROLL_MS = 1420;
 const MAX_RESULTS = 3;
 
 let messageId = 0;
@@ -116,7 +123,7 @@ export function HomeView() {
 
     const timer = setTimeout(() => {
       resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 420);
+    }, RESULTS_SCROLL_MS);
     timers.current.push(timer);
   }, []);
 

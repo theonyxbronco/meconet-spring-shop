@@ -40,7 +40,7 @@ export default function CartPage() {
                 className="flex flex-wrap items-center gap-5 rounded-card border border-line bg-surface p-5"
               >
                 <div className="h-[86px] w-[120px] shrink-0 rounded-lg bg-brand-50 p-2">
-                  <KitBoxArt kit={line.kit} className="h-full w-full" />
+                  <KitBoxArt kit={line.kit} art="thumbnail" className="h-full w-full" />
                 </div>
 
                 <div className="min-w-[180px] flex-1">

@@ -78,7 +78,8 @@ export const kits: Kit[] = [
     slug: "garage-kit",
     name: "Garage Kit",
     family: "Garage",
-    coverImage: "/kit-covers/garage-kit.png",
+    coverImage: "/kit-covers/Garage_Kit.png",
+    thumbnailImage: "/kit-covers/Garage_Thumbnail.png",
     partNumber: "2734645",
     shortText: "Mixed box of compression, extension and torsion springs for everyday repairs.",
     description:
@@ -127,7 +128,8 @@ export const kits: Kit[] = [
     slug: "mechatro-kit",
     name: "Mechatro Kit",
     family: "Mechatro",
-    coverImage: "/kit-covers/mechatro-kit.png",
+    coverImage: "/kit-covers/Mechatro_Kit.png",
+    thumbnailImage: "/kit-covers/Mechatro_Thumbnail.png",
     partNumber: "2734689",
     shortText: "Precision springs for actuators, grippers, limit switches and servo linkages.",
     description:
@@ -165,24 +167,29 @@ export const kits: Kit[] = [
     components: [
       // Compression — plunger returns and preload. The first is test spring 1, Ø5.5 × 40:
       // its long, thin photograph is the one in the kit with those proportions.
-      { type: "compression", wire: 1.0, outer: 5.5, len: 40, coils: 22, end: "Closed and ground", material: "stainless", quantity: 12, target: true, photo: S("minimalist-steel-compression-spring"), drawings: COMPRESSION_SHEETS },
+      { type: "compression", wire: 1.0, outer: 5.5, len: 40, coils: 22, end: "Closed and ground", material: "stainless", quantity: 10, target: true, photo: S("minimalist-steel-compression-spring"), drawings: COMPRESSION_SHEETS },
       { type: "compression", wire: 1.3, outer: 6.0, len: 18, coils: 9, end: "Closed and ground", material: "stainless", quantity: 12, photo: S("polished-chrome-compression-spring"), drawings: COMPRESSION_SHEETS },
-      { type: "compression", wire: 2.2, outer: 9.0, len: 43, coils: 16, end: "Closed and ground", material: "stainless", quantity: 8, photo: S("polished-steel-compression-spring"), drawings: COMPRESSION_SHEETS },
-      { type: "compression", wire: 1.8, outer: 12.0, len: 28, coils: 8, end: "Closed and ground", material: "stainless", quantity: 8, photo: S("polished-silver-compression-spring"), drawings: COMPRESSION_SHEETS },
+      { type: "compression", wire: 2.2, outer: 9.0, len: 43, coils: 16, end: "Closed and ground", material: "stainless", quantity: 10, photo: S("polished-steel-compression-spring"), drawings: COMPRESSION_SHEETS },
+      { type: "compression", wire: 1.8, outer: 12.0, len: 28, coils: 8, end: "Closed and ground", material: "stainless", quantity: 12, photo: S("polished-silver-compression-spring"), drawings: COMPRESSION_SHEETS },
 
       // Extension — gripper and linkage returns. All but the hooked Ø10 × 65 close
       // into a full loop, which is what their photographs show. The second is test
       // spring 2, Ø8 × 44: 25 coils of 1.2 wire sit touching, as in its photograph,
       // over exactly the body length that 44 mm leaves after the two loops.
-      { type: "extension", wire: 0.45, outer: 6.0, len: 22, coils: 26, end: "Full loop both ends", material: "stainless", quantity: 12, photo: S("polished-diagonal-extension-spring-2"), drawings: EXTENSION_LOOP_SHEETS },
+      { type: "extension", wire: 0.45, outer: 6.0, len: 22, coils: 26, end: "Full loop both ends", material: "stainless", quantity: 10, photo: S("polished-diagonal-extension-spring-2"), drawings: EXTENSION_LOOP_SHEETS },
       { type: "extension", wire: 1.2, outer: 8.0, len: 44, coils: 25, end: "Full loop both ends", material: "stainless", quantity: 10, target: true, photo: S("polished-diagonal-extension-spring"), drawings: EXTENSION_LOOP_SHEETS },
-      { type: "extension", wire: 1.2, outer: 10.0, len: 65, coils: 39, end: "Machine hooks both ends", quantity: 8, photo: S("metal-extension-spring-on-white"), drawings: EXTENSION_HOOK_SHEETS },
-      { type: "extension", wire: 1.0, outer: 14.0, len: 57, coils: 32, end: "Full loop both ends", material: "stainless", quantity: 6, photo: S("polished-stainless-steel-extension-spring"), drawings: EXTENSION_LOOP_SHEETS },
+      { type: "extension", wire: 1.2, outer: 10.0, len: 65, coils: 39, end: "Machine hooks both ends", quantity: 10, photo: S("metal-extension-spring-on-white"), drawings: EXTENSION_HOOK_SHEETS },
+      { type: "extension", wire: 1.0, outer: 14.0, len: 57, coils: 32, end: "Full loop both ends", material: "stainless", quantity: 10, photo: S("polished-stainless-steel-extension-spring"), drawings: EXTENSION_LOOP_SHEETS },
 
       // Torsion — hinge, flap and lever returns, by leg arrangement.
       { type: "torsion", wire: 0.9, outer: 7.0, len: 18, coils: 5, end: "90° straight legs", material: "stainless", quantity: 12, photo: S("polished-l-shaped-torsion-spring"), drawings: TORSION_SHEETS },
-      { type: "torsion", wire: 1.3, outer: 11.0, len: 26, coils: 5, end: "Straight legs, tangential", material: "stainless", quantity: 10, photo: S("polished-stainless-steel-torsion-spring"), drawings: TORSION_SHEETS },
-      { type: "torsion", wire: 1.6, outer: 13.0, len: 32, coils: 3, end: "270° crossed legs", material: "stainless", quantity: 8, photo: S("polished-crossed-arm-torsion-spring"), drawings: TORSION_SHEETS },
+      { type: "torsion", wire: 1.3, outer: 11.0, len: 26, coils: 5, end: "Straight legs, tangential", material: "stainless", quantity: 12, photo: S("polished-stainless-steel-torsion-spring"), drawings: TORSION_SHEETS },
+      { type: "torsion", wire: 1.6, outer: 13.0, len: 32, coils: 3, end: "270° crossed legs", material: "stainless", quantity: 12, photo: S("polished-crossed-arm-torsion-spring"), drawings: TORSION_SHEETS },
+    ],
+    // The opened box, shown straight after the lid. It is the Basic layout that is
+    // photographed, so Pro — which fills more compartments — does not claim it.
+    galleryImages: [
+      { src: "/kit-covers/Open_Kit.png", label: "Mechatro Kit, opened", tier: "basic" },
     ],
   }),
 
@@ -190,7 +197,8 @@ export const kits: Kit[] = [
     slug: "bike-kit",
     name: "Bike Kit",
     family: "Bike",
-    coverImage: "/kit-covers/bike-kit.png",
+    coverImage: "/kit-covers/Bike_Kit.png",
+    thumbnailImage: "/kit-covers/Bike_Thumbnail.png",
     partNumber: "2734651",
     shortText: "Small corrosion-resistant springs for brake, lever and folding mechanisms.",
     description:
@@ -237,7 +245,8 @@ export const kits: Kit[] = [
     slug: "trampoline-kit",
     name: "Trampoline Kit",
     family: "Trampoline",
-    coverImage: "/kit-covers/trampoline-kit.png",
+    coverImage: "/kit-covers/Trampoline_Kit.png",
+    thumbnailImage: "/kit-covers/Trampoline_Thumbnail.png",
     partNumber: "2734668",
     shortText: "Long heavy-duty extension springs for outdoor equipment under repeated load.",
     description:
@@ -281,7 +290,8 @@ export const kits: Kit[] = [
     slug: "home-kit",
     name: "Home Kit",
     family: "Home",
-    coverImage: "/kit-covers/home-kit.png",
+    coverImage: "/kit-covers/Home_Kit.png",
+    thumbnailImage: "/kit-covers/Home_Thumbnail.png",
     partNumber: "2734672",
     shortText: "Light indoor springs for drawers, catches, hinges and small fittings.",
     description:
@@ -329,7 +339,8 @@ export const kits: Kit[] = [
     slug: "boat-kit",
     name: "Boat Kit",
     family: "Boat",
-    coverImage: "/kit-covers/boat-kit.png",
+    coverImage: "/kit-covers/Boat_Kit.png",
+    thumbnailImage: "/kit-covers/Boat_Thumbnail.png",
     partNumber: "2734695",
     shortText: "All-stainless springs and preload washers for deck hardware and rigging.",
     description:
