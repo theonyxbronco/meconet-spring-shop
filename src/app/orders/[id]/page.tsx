@@ -40,7 +40,7 @@ export default function OrderPage() {
         </Link>
         <span aria-hidden>/</span>
         <Link href="/orders" className="hover:text-brand-600">
-          Orders &amp; documents
+          My orders &amp; documents
         </Link>
         <span aria-hidden>/</span>
         <span className="font-semibold text-brand-600">{order.number}</span>

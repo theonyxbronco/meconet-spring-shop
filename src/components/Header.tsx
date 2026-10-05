@@ -7,7 +7,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Wordmark, KitBoxArt } from "@/assets/brand";
 import type { SpringType } from "@/data/types";
 import { formatEUR, useCart } from "@/lib/cart";
-import { CartIcon, ChevronDownIcon, SearchIcon, UserIcon } from "./icons";
+import { CartIcon, ChevronDownIcon, SearchIcon } from "./icons";
 
 /**
  * The catalogue row. None of these are standalone pages: every spring in the shop is
@@ -28,11 +28,18 @@ export function Header() {
   const router = useRouter();
   const cart = useCart();
   const [query, setQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchInput = useRef<HTMLInputElement>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [bump, setBump] = useState(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSeen = useRef<number>(0);
+
+  // Opening the field is a click on the icon, so the caret belongs in it straight away.
+  useEffect(() => {
+    if (searchOpen) searchInput.current?.focus();
+  }, [searchOpen]);
 
   // Adding to the order flashes the badge and shows the preview unprompted,
   // so the confirmation is impossible to miss during the task.
@@ -77,25 +84,47 @@ export function Header() {
               <span className="hidden text-[15px] font-medium text-white/95 sm:block">Spring Shop</span>
             </Link>
 
+            {/* Collapsed to its icon so the bar stays uncluttered; the field opens in place
+                on the first click and folds away again once it is empty and left alone. */}
             <form
-              className="min-w-0 flex-1 lg:max-w-[440px]"
+              className={`min-w-0 transition-[flex] ${searchOpen ? "flex-1 lg:max-w-[440px]" : "flex-none"}`}
               onSubmit={(event) => {
                 event.preventDefault();
                 if (!query.trim()) return;
                 router.push(`/?q=${encodeURIComponent(query.trim())}`);
                 setQuery("");
+                setSearchOpen(false);
               }}
             >
-              <label className="flex items-center gap-2.5 rounded-full border border-white/25 bg-white/10 px-4 py-2 transition focus-within:border-white/60 focus-within:bg-white/15">
-                <SearchIcon width={18} height={18} className="shrink-0 text-white/70" />
-                <input
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search springs, or describe what you need"
+              {searchOpen ? (
+                <label className="flex items-center gap-2.5 rounded-full border border-white/25 bg-white/10 px-4 py-2 transition focus-within:border-white/60 focus-within:bg-white/15">
+                  <SearchIcon width={18} height={18} className="shrink-0 text-white/70" />
+                  <input
+                    ref={searchInput}
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    onBlur={() => {
+                      if (!query.trim()) setSearchOpen(false);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Escape") setSearchOpen(false);
+                    }}
+                    placeholder="Search springs, or describe what you need"
+                    aria-label="Search springs, or describe what you need"
+                    className="w-full bg-transparent text-[14px] text-white outline-none placeholder:text-white/60"
+                  />
+                </label>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen(true)}
                   aria-label="Search springs, or describe what you need"
-                  className="w-full bg-transparent text-[14px] text-white outline-none placeholder:text-white/60"
-                />
-              </label>
+                  aria-expanded={false}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white transition hover:border-white/60 hover:bg-white/20"
+                >
+                  <SearchIcon width={19} height={19} />
+                </button>
+              )}
             </form>
 
             <nav className="ml-auto hidden items-center gap-6 text-[13.5px] text-white/85 xl:flex">
@@ -112,7 +141,7 @@ export function Header() {
                 onClick={() => showToast("Only English is available in this prototype")}
                 className="flex items-center gap-1.5 hover:text-white"
               >
-                English <ChevronDownIcon width={15} height={15} />
+                Eng <ChevronDownIcon width={15} height={15} />
               </button>
             </nav>
 
@@ -120,10 +149,10 @@ export function Header() {
                 reachable from every page, not only from the order they just placed. */}
             <Link
               href="/orders"
-              className="ml-auto flex shrink-0 items-center gap-2 text-[13.5px] text-white/90 hover:text-white xl:ml-0"
+              className="ml-auto shrink-0 text-[13.5px] text-white/90 hover:text-white xl:ml-0"
             >
-              <UserIcon width={19} height={19} />
-              <span className="hidden sm:inline">Orders &amp; documents</span>
+              <span className="hidden sm:inline">My orders &amp; documents</span>
+              <span className="sm:hidden">Orders</span>
             </Link>
 
             <div className="relative shrink-0" onMouseEnter={openPreview} onMouseLeave={closePreview}>

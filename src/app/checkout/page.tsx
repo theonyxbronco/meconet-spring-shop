@@ -73,7 +73,7 @@ export default function CheckoutPage() {
               Order placed
             </h1>
             <p className="mt-2 text-[15.5px] text-ink-soft">
-              Everything below stays in <Link href="/orders" className="font-semibold text-brand-600 hover:underline">Orders &amp; documents</Link>,
+              Everything below stays in <Link href="/orders" className="font-semibold text-brand-600 hover:underline">My orders &amp; documents</Link>,
               so you can come back for the paperwork whenever your bookkeeping needs it.
             </p>
           </div>

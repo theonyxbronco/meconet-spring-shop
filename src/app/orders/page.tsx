@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Orders & documents — the archive.
+ * My orders & documents — the archive.
  *
  * Built around the job rather than around the order: at quarter end somebody has to
  * produce every document from a period, and doing that one order at a time through a
@@ -68,10 +68,10 @@ export default function OrdersPage() {
           Frontpage
         </Link>
         <span aria-hidden>/</span>
-        <span className="font-semibold text-brand-600">Orders &amp; documents</span>
+        <span className="font-semibold text-brand-600">My orders &amp; documents</span>
       </nav>
 
-      <h1 className="text-[36px] font-extrabold tracking-tight text-ink">Orders &amp; documents</h1>
+      <h1 className="text-[36px] font-extrabold tracking-tight text-ink">My orders &amp; documents</h1>
       <p className="mt-3 max-w-[640px] text-[15.5px] text-ink-soft">
         Every order with its confirmation, delivery note and invoice. Select a period and take the
         whole lot in one go.
@@ -237,7 +237,7 @@ function Row({
       </td>
       <td className="py-4 align-top text-ink-soft">
         {order.lines.map((line) => (
-          <span key={line.slug} className="block">
+          <span key={line.partNumber} className="block">
             {line.quantity} × {line.name}
           </span>
         ))}
