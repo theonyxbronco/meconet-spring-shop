@@ -114,15 +114,10 @@ function StateFromQuery({
     // spring the box on screen does not contain.
     if (!kitVariant(kit, "pro").components.some((component) => component.id === requested)) return;
     if (!kit.components.some((component) => component.id === requested)) onTier("pro");
+    // The spring is selected, but the page is left at the top: arriving from the
+    // conversation should open the kit, not throw the reader part-way down it.
     onSpring(requested);
-    const timer = setTimeout(() => {
-      // Marked as handled only once the scroll has actually run. Claiming it up front
-      // loses the scroll under a Strict Mode double mount: the cleanup cancels the
-      // timer and the second pass then sees the request as already dealt with.
-      handled.current = requested;
-      document.getElementById("included-springs")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 350);
-    return () => clearTimeout(timer);
+    handled.current = requested;
   }, [requested, kit, onSpring, onTier]);
 
   return null;

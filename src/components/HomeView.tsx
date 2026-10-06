@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import { kits } from "@/data/kits";
 import { SPRING_TYPE_LABEL, type SpringType } from "@/data/types";
 import {
@@ -30,13 +31,6 @@ import { ArrowRightIcon, FilterIcon, SearchIcon } from "./icons";
 type Phase = "idle" | "asking" | "results";
 
 const THINKING_MS = 520;
-/**
- * How long the answer stays put before the page scrolls down to the kits it found.
- * Long enough to read the line that says what was picked — moving the page out from
- * under that sentence while it is still being read is what makes the jump feel like
- * a glitch rather than an answer.
- */
-const RESULTS_SCROLL_MS = 1420;
 const MAX_RESULTS = 3;
 
 let messageId = 0;
@@ -119,12 +113,9 @@ export function HomeView() {
     setQuestion(undefined);
     setPhase("results");
 
+    // No scroll here on purpose: the page stays where the reader is, and the
+    // "See the results" button in the conversation is how they go down.
     setMessages((current) => [...current, ...assistantLines(resultReply(top, finalCriteria), resultLink(top))]);
-
-    const timer = setTimeout(() => {
-      resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, RESULTS_SCROLL_MS);
-    timers.current.push(timer);
   }, []);
 
   const advance = useCallback(
@@ -288,80 +279,114 @@ export function HomeView() {
   }, [baseList, typeFilter, sizeFilter, sort]);
 
   const showingResults = phase === "results" && results.length > 0;
+  // The conversation owns the hero from the first message until "Start over".
+  const chatOpen = phase !== "idle";
   const categoryLabel = isSpringType(typeFilter) ? SPRING_TYPE_LABEL[typeFilter] : undefined;
   const describePrompts = STARTER_PROMPTS.filter((prompt) => prompt.kind === "describe");
 
   return (
     <>
-      <section className="hero-wash">
-        <div className="relative mx-auto max-w-[1320px] px-5 pb-16 pt-14">
-          <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,44%)]">
-            <div className="relative z-10 max-w-[760px]">
-              <h1 className="text-[clamp(2.4rem,5.2vw,3.6rem)] font-extrabold leading-[1.08] tracking-tight text-ink">
-                Let&rsquo;s find what you
-                <br />
-                are looking for.
-              </h1>
-              <p className="mt-4 max-w-[560px] text-[16.5px] leading-relaxed text-ink-soft">
-                Not sure where to start? Describe the part and what it&rsquo;s for in your own
-                words. If you have exact dimensions, include those too. Let&rsquo;s see what fits
-                your project together!
-              </p>
-
-              <form
-                className="mt-8 flex items-center gap-3 rounded-full bg-surface p-2 pl-6 shadow-[0_10px_40px_rgba(11,46,94,0.12)]"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  start(input);
-                }}
+      {/* The fanned deck below is positioned with transforms that reach past its own
+          column — including the two invisible cards parked off to the side — and that
+          reach was adding a sideways scroll to the whole page. Clipped on the x axis
+          only, so the sticky/visible vertical layout is untouched. */}
+      <section className="hero-wash overflow-x-clip">
+        {/* A single-cell grid holding both states. On the wide layout it gets a floor,
+            so handing the hero over to the conversation does not snap the whole
+            section a couple of hundred pixels shorter as the title leaves. */}
+        <div className="relative mx-auto grid max-w-[1320px] items-center px-5 pb-16 pt-14 lg:min-h-[520px]">
+          {/* The opening pitch and the conversation are stacked in one grid cell, so
+              the one on its way out never pushes the one arriving: asking the first
+              question hands the whole hero over to the thread, and the title, the
+              search bar and the fanned deck fade out from underneath it. Whatever is
+              leaving stops taking clicks the moment it starts to go. */}
+          <AnimatePresence initial={false}>
+            {chatOpen ? (
+              <motion.div
+                key="conversation"
+                initial={{ opacity: 0, y: 22, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 22, scale: 0.97, pointerEvents: "none" }}
+                // Arrives just behind the title on its way out, so the two cross
+                // rather than both sitting at half opacity in the same place.
+                transition={{ duration: 0.42, delay: 0.1, ease: [0.22, 0.61, 0.36, 1] }}
+                className="col-start-1 row-start-1 flex items-center justify-center"
               >
-                <SearchIcon width={22} height={22} className="shrink-0 text-ink/60" />
-                <input
-                  value={input}
-                  onChange={(event) => setInput(event.target.value)}
-                  placeholder="Describe the spring, or paste its dimensions"
-                  aria-label="Describe the spring you need, or enter its dimensions"
-                  className="w-full bg-transparent py-3 text-[16px] outline-none placeholder:text-muted"
-                />
-                <button
-                  type="submit"
-                  aria-label="Start the spring finder"
-                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white transition hover:bg-brand-600"
-                >
-                  <ArrowRightIcon width={22} height={22} />
-                </button>
-              </form>
-
-              {/* Openers in a customer's own words — the way in for someone who has no spec. */}
-              {phase === "idle" && (
-                <div className="mt-6">
-                  <StarterGroup label="Search suggestions" prompts={describePrompts} onPick={start} />
+                <div className="w-full max-w-[860px]">
+                  <ConversationPanel
+                    messages={messages}
+                    question={question}
+                    thinking={thinking}
+                    matchCount={showingResults ? results.length : rankKits(criteria).slice(0, MAX_RESULTS).length}
+                    guideOpen={guideOpen}
+                    onToggleGuide={() => setGuideOpen((open) => !open)}
+                    onAnswer={handleAnswer}
+                    onSkip={handleSkip}
+                    onReset={handleReset}
+                    onSend={handleTyped}
+                    suggestions={thinking ? [] : suggestions({ criteria, question, results, misses })}
+                    finished={showingResults}
+                  />
                 </div>
-              )}
+              </motion.div>
+            ) : (
+              <motion.div
+                key="intro"
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16, scale: 0.98, pointerEvents: "none" }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+                className="col-start-1 row-start-1 grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,44%)]"
+              >
+                <div className="relative z-10 max-w-[760px]">
+                  <h1 className="text-[clamp(2.4rem,5.2vw,3.6rem)] font-extrabold leading-[1.08] tracking-tight text-ink">
+                    Let&rsquo;s find what you
+                    <br />
+                    are looking for.
+                  </h1>
+                  <p className="mt-4 max-w-[560px] text-[16.5px] leading-relaxed text-ink-soft">
+                    Not sure where to start? Describe the part and what it&rsquo;s for in your own
+                    words. If you have exact dimensions, include those too. Let&rsquo;s see what fits
+                    your project together!
+                  </p>
 
-              {phase !== "idle" && (
-                <ConversationPanel
-                  messages={messages}
-                  question={question}
-                  thinking={thinking}
-                  matchCount={showingResults ? results.length : rankKits(criteria).slice(0, MAX_RESULTS).length}
-                  guideOpen={guideOpen}
-                  onToggleGuide={() => setGuideOpen((open) => !open)}
-                  onAnswer={handleAnswer}
-                  onSkip={handleSkip}
-                  onReset={handleReset}
-                  onSend={handleTyped}
-                  suggestions={thinking ? [] : suggestions({ criteria, question, results, misses })}
-                  finished={showingResults}
-                />
-              )}
-            </div>
+                  <form
+                    className="mt-8 flex items-center gap-3 rounded-full bg-surface p-2 pl-6 shadow-[0_10px_40px_rgba(11,46,94,0.12)]"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      start(input);
+                    }}
+                  >
+                    <SearchIcon width={22} height={22} className="shrink-0 text-ink/60" />
+                    <input
+                      value={input}
+                      onChange={(event) => setInput(event.target.value)}
+                      placeholder="Describe the spring, or paste its dimensions"
+                      aria-label="Describe the spring you need, or enter its dimensions"
+                      className="w-full bg-transparent py-3 text-[16px] outline-none placeholder:text-muted"
+                    />
+                    <button
+                      type="submit"
+                      aria-label="Start the spring finder"
+                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white transition hover:bg-brand-600"
+                    >
+                      <ArrowRightIcon width={22} height={22} />
+                    </button>
+                  </form>
 
-            {/* The range, fanned: three lids at a size you can actually read. */}
-            <div className="relative hidden lg:block">
-              <HeroKits />
-            </div>
-          </div>
+                  {/* Openers in a customer's own words — the way in for someone who has no spec. */}
+                  <div className="mt-6">
+                    <StarterGroup label="Search suggestions" prompts={describePrompts} onPick={start} />
+                  </div>
+                </div>
+
+                {/* The range, fanned: three lids at a size you can actually read. */}
+                <div className="relative hidden lg:block">
+                  <HeroKits />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </section>
 

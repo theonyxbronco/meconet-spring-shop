@@ -216,3 +216,11 @@ export const CarouselIcon: Icon = (p) => (
     <path d="M4 8v8M20 8v8" />
   </svg>
 );
+
+export const HelpIcon: Icon = (p) => (
+  <svg {...base(p)}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M9.6 9.3a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .9-1 1.6v.3" />
+    <path d="M12 17h.01" />
+  </svg>
+);

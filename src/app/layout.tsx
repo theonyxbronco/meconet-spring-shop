@@ -20,7 +20,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={figtree.variable}>
-      <body className="min-h-screen bg-page">
+      {/* Browser extensions get at <body> before React hydrates — ColorZilla adds a
+          `cz-shortcut-listen` attribute, others add their own — and React reports
+          every one of them as a hydration mismatch. This covers this element's own
+          attributes only, not the tree underneath it, so a real mismatch in the app
+          still gets reported. */}
+      <body className="min-h-screen bg-page" suppressHydrationWarning>
         <CartProvider>
           <Header />
           <main>{children}</main>

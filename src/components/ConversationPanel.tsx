@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { ChatLink } from "@/lib/dialogue";
 import { MEASURING_STEPS, SPRING_SHAPES, type Question } from "@/lib/search";
-import { ArrowRightIcon, CheckIcon, RulerIcon, SparkIcon } from "./icons";
+import { ScreenRulerOverlay } from "./ScreenRuler";
+import { ArrowRightIcon, CheckIcon, HelpIcon, RulerIcon, SparkIcon } from "./icons";
 
 export interface ChatMessage {
   id: string;
@@ -45,13 +46,38 @@ export function ConversationPanel({
   finished: boolean;
 }) {
   const [draft, setDraft] = useState("");
+  // The 1:1 ruler from the kit pages, reachable here too: the finder keeps asking for
+  // millimetres, so the thing that produces them belongs next to the question.
+  const [rulerOpen, setRulerOpen] = useState(false);
   // Only the newest "open this" button is live; older ones would just repeat it.
   const linkedId = messages.findLast((message) => message.link)?.id;
 
+  const latestRef = useRef<HTMLLIElement>(null);
+  const scrolledFor = useRef<string | null>(null);
+  const latest = messages[messages.length - 1];
+
+  // With the measuring guide open, the reply box sits a long way under the thread,
+  // so a message sent from down there lands off the top of the screen and reads as
+  // if it vanished. Only the reader's own messages pull the view back to the thread
+  // — `nearest` leaves it alone when the thread is already on screen, and the
+  // assistant's answers still arrive without moving the page.
+  useEffect(() => {
+    if (!latest || latest.role !== "user") return;
+    if (scrolledFor.current === latest.id) return;
+    scrolledFor.current = latest.id;
+    latestRef.current?.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      block: "nearest",
+    });
+  }, [latest]);
+
   return (
+    // No entry animation and no outer margin of its own: in the hero, opening this
+    // panel *is* the takeover, so the animation and the spacing belong to the
+    // wrapper that fades the title and the search bar out around it.
     <section
       aria-label="Guided spring finder"
-      className="animate-rise mt-6 w-full rounded-2xl border border-line bg-surface/95 p-5 shadow-card backdrop-blur sm:p-6"
+      className="w-full rounded-2xl border border-line bg-surface/95 p-5 shadow-card backdrop-blur sm:p-6"
     >
       <header className="flex flex-wrap items-center gap-2.5 border-b border-line pb-4">
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-brand-600">
@@ -63,7 +89,7 @@ export function ConversationPanel({
             Describe the problem or give me a spec — both work
           </p>
         </div>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex flex-wrap items-center gap-2">
           <button
             onClick={onToggleGuide}
             aria-expanded={guideOpen}
@@ -73,8 +99,17 @@ export function ConversationPanel({
                 : "border-line text-muted hover:border-brand-400 hover:text-brand-600"
             }`}
           >
-            <RulerIcon width={15} height={15} />
+            <HelpIcon width={15} height={15} />
             How to measure
+          </button>
+          {/* The companion to the guide: one explains the measurement, the other is
+              the ruler you take it with. */}
+          <button
+            onClick={() => setRulerOpen(true)}
+            className="flex items-center gap-1.5 rounded-full border border-line px-3.5 py-1.5 text-[13px] font-medium text-muted transition hover:border-brand-400 hover:text-brand-600"
+          >
+            <RulerIcon width={15} height={15} />
+            Measure on screen
           </button>
           <button
             onClick={onReset}
@@ -90,9 +125,11 @@ export function ConversationPanel({
         {messages.map((message) => (
           <motion.li
             key={message.id}
+            ref={message.id === latest?.id ? latestRef : undefined}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex justify-start"
+            // scroll-mt clears the fixed header when a sent message pulls the view back.
+            className="flex scroll-mt-24 justify-start"
           >
             <span
               className={`max-w-[88%] rounded-2xl px-4 py-2.5 text-[14.5px] leading-relaxed ${
@@ -137,10 +174,6 @@ export function ConversationPanel({
           )}
         </AnimatePresence>
       </ol>
-
-      <AnimatePresence initial={false}>
-        {guideOpen && <MeasuringGuide onClose={onToggleGuide} />}
-      </AnimatePresence>
 
       {question && !thinking && (
         <div className="animate-rise border-t border-line pt-4">
@@ -189,15 +222,34 @@ export function ConversationPanel({
             <CheckIcon width={15} height={15} />
             {matchCount} assortment{matchCount === 1 ? "" : "s"} matched
           </span>
+          {/* Pushed to the right and given a filled button: with the page no longer
+              scrolling itself, this is the only way down to the kits. */}
           <a
             href="#results"
-            className="flex items-center gap-2 text-[14px] font-semibold text-brand-600 hover:underline"
+            onClick={(event) => {
+              const results = document.getElementById("results");
+              if (!results) return;
+              // The jump is the browser's default for an anchor; this takes it over so
+              // the reader can see the page travel down to the kits. Reduced-motion
+              // keeps the instant jump.
+              if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+              event.preventDefault();
+              results.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+            className="ml-auto flex items-center gap-2 rounded-full bg-brand-500 px-4 py-2 text-[14px] font-semibold text-white shadow-sm transition hover:bg-brand-600"
           >
             See the results below
             <ArrowRightIcon width={17} height={17} />
           </a>
         </div>
       )}
+
+      {/* The guide sits under the follow-ups on purpose: it is reference material,
+          and anything the conversation asks next has to stay next to the thread
+          rather than being pushed below a wall of measuring instructions. */}
+      <AnimatePresence initial={false}>
+        {guideOpen && <MeasuringGuide onClose={onToggleGuide} />}
+      </AnimatePresence>
 
       {/* Typing is always allowed: an answer, a measurement, a question, a correction. */}
       <form
@@ -229,6 +281,10 @@ export function ConversationPanel({
           <ArrowRightIcon width={18} height={18} />
         </button>
       </form>
+
+      <AnimatePresence>
+        {rulerOpen && <ScreenRulerOverlay onClose={() => setRulerOpen(false)} />}
+      </AnimatePresence>
     </section>
   );
 }
@@ -247,7 +303,7 @@ function MeasuringGuide({ onClose }: { onClose: () => void }) {
       transition={{ duration: 0.22 }}
       className="overflow-hidden"
     >
-      <div className="mb-5 rounded-xl border border-brand-100 bg-brand-50/60 p-4 sm:p-5">
+      <div className="mt-5 rounded-xl border border-brand-100 bg-brand-50/60 p-4 sm:p-5">
         <div className="flex items-start gap-3">
           <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface text-brand-600">
             <RulerIcon width={16} height={16} />
