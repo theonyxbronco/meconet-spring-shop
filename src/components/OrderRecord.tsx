@@ -53,6 +53,32 @@ export function OrderRecord({ order }: { order: Order }) {
           <Fact label="Cost centre" value={order.costCentre || "Not given"} />
           <Fact label="Invoice copy to" value={order.invoiceEmail || BUYER.email} />
         </dl>
+
+        {/*
+         * What was chosen at checkout, read back. A participant who changed the
+         * address or the terms needs to see that the order kept the change, and a
+         * month later this is the only place that still says where the box went.
+         */}
+        <dl className="mt-5 grid gap-x-6 gap-y-3 border-t border-line pt-5 text-[14px] sm:grid-cols-3">
+          <Fact
+            label={order.delivery.id === "pickup" ? "Collection" : "Delivered to"}
+            value={[
+              order.deliveryAddress.company,
+              order.deliveryAddress.street,
+              `${order.deliveryAddress.postalCode} ${order.deliveryAddress.city}`,
+              order.deliveryAddress.country,
+            ]}
+          />
+          <Fact label="Delivery" value={[order.delivery.label, order.delivery.detail]} />
+          <Fact
+            label="Payment"
+            value={
+              order.paymentMethod === "invoice"
+                ? [`Invoice, ${order.paymentTermDays} days net`, `Billed to ${order.billing.company}`]
+                : ["Card", "Paid when the order was placed"]
+            }
+          />
+        </dl>
       </section>
 
       <DocumentStrip order={order} />
@@ -88,6 +114,12 @@ export function OrderRecord({ order }: { order: Order }) {
             <div className="flex justify-between py-1">
               <dt className="text-muted">Subtotal</dt>
               <dd className="font-semibold text-ink">{formatEUR(order.subtotalEUR)}</dd>
+            </div>
+            <div className="flex justify-between py-1">
+              <dt className="text-muted">{order.delivery.label}</dt>
+              <dd className="font-semibold text-ink">
+                {order.shippingEUR === 0 ? "Free" : formatEUR(order.shippingEUR)}
+              </dd>
             </div>
             <div className="flex justify-between py-1">
               <dt className="text-muted">VAT {(VAT_RATE * 100).toFixed(1)}%</dt>
@@ -234,11 +266,19 @@ function CopyField({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Fact({ label, value }: { label: string; value: string }) {
+function Fact({ label, value }: { label: string; value: string | string[] }) {
+  const lines = Array.isArray(value) ? value : [value];
+
   return (
     <div>
       <dt className="text-[12px] uppercase tracking-wide text-muted">{label}</dt>
-      <dd className="mt-0.5 font-semibold text-ink">{value}</dd>
+      <dd className="mt-0.5 font-semibold text-ink">
+        {lines.map((line, index) => (
+          <span key={`${index}-${line}`} className={index === 0 ? "block" : "block font-normal text-ink-soft"}>
+            {line}
+          </span>
+        ))}
+      </dd>
     </div>
   );
 }

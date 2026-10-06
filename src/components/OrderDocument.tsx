@@ -16,7 +16,7 @@
  */
 
 import { Wordmark } from "@/assets/brand";
-import { BUYER, SELLER } from "@/data/seller";
+import { SELLER } from "@/data/seller";
 import {
   formatDate,
   formatReference,
@@ -68,37 +68,65 @@ export function OrderDocument({ order, kind }: { order: Order; kind: DocumentKin
       </header>
 
       <section className="mt-6 grid grid-cols-2 gap-8">
+        {/*
+         * A delivery note is checked against the box by whoever opens it, so it is
+         * addressed to where the box went; an invoice is filed by accounts, so it is
+         * addressed to whoever the buyer told us to invoice. Those are the same
+         * company most of the time and emphatically not always, which is why the
+         * checkout asks separately and this prints whichever one applies.
+         */}
         <Block title={kind === "delivery-note" ? "Deliver to" : "Bill to"}>
-          {BUYER.name}
+          {kind === "delivery-note" ? order.deliveryAddress.company : order.billing.company}
           <br />
-          {BUYER.street}, {BUYER.postal}
+          {order.deliveryAddress.street}, {order.deliveryAddress.postalCode}{" "}
+          {order.deliveryAddress.city}
           <br />
-          {BUYER.country}
+          {order.deliveryAddress.country}
           <br />
-          Business ID {BUYER.businessId}
-          <br />
-          Attn. {BUYER.contact}
+          Business ID {order.billing.businessId}
+          {order.deliveryAddress.contact && (
+            <>
+              <br />
+              Attn. {order.deliveryAddress.contact}
+            </>
+          )}
         </Block>
 
         <dl className="grid grid-cols-[auto_1fr] gap-x-5 gap-y-1.5 text-[11.5px]">
           <Row label="Your reference" value={order.buyerReference || "—"} />
           <Row label="Cost centre" value={order.costCentre || "—"} />
-          {kind === "invoice" && (
-            <>
-              <Row label="Payment reference" value={formatReference(order.reference)} strong />
-              <Row label="Terms" value={`${order.paymentTermDays} days net`} />
-              <Row label="Due date" value={formatDate(order.dueDate)} strong />
-            </>
-          )}
+          {kind === "invoice" &&
+            (order.paymentMethod === "invoice" ? (
+              <>
+                <Row label="Payment reference" value={formatReference(order.reference)} strong />
+                <Row label="Terms" value={`${order.paymentTermDays} days net`} />
+                <Row label="Due date" value={formatDate(order.dueDate)} strong />
+              </>
+            ) : (
+              // A card order is already paid, so this sheet is a receipt. Printing a
+              // due date on it is how a workshop ends up paying twice.
+              <>
+                <Row label="Paid by" value="Card" strong />
+                <Row label="Paid on" value={formatDate(order.placedAt)} />
+              </>
+            ))}
           {kind === "confirmation" && (
             <>
-              <Row label="Delivery" value="Standard parcel · 1–2 working days" />
-              <Row label="Payment" value={`Invoice, ${order.paymentTermDays} days net`} />
+              <Row label="Delivery" value={`${order.delivery.label} · ${order.delivery.detail}`} />
+              <Row
+                label="Payment"
+                value={
+                  order.paymentMethod === "invoice"
+                    ? `Invoice, ${order.paymentTermDays} days net`
+                    : "Card, paid on ordering"
+                }
+              />
             </>
           )}
           {kind === "delivery-note" && (
             <>
               <Row label="Order number" value={order.number} />
+              <Row label="Delivery" value={order.delivery.label} />
               <Row label="Packages" value={String(order.lines.reduce((n, l) => n + l.quantity, 0))} />
             </>
           )}
@@ -134,16 +162,22 @@ export function OrderDocument({ order, kind }: { order: Order; kind: DocumentKin
         <div className="mt-5 flex justify-end">
           <dl className="w-[260px] text-[11.5px]">
             <Total label="Subtotal" value={formatEUR(order.subtotalEUR)} />
+            <Total
+              label={order.delivery.label}
+              value={order.shippingEUR === 0 ? "Free" : formatEUR(order.shippingEUR)}
+            />
             <Total label={`VAT ${(VAT_RATE * 100).toFixed(1)}%`} value={formatEUR(order.vatEUR)} />
             <div className="mt-2 flex justify-between border-t-2 border-ink pt-2 text-[15px]">
-              <dt className="font-bold text-ink">{kind === "invoice" ? "Amount due" : "Total"}</dt>
+              <dt className="font-bold text-ink">
+                {kind === "invoice" && order.paymentMethod === "invoice" ? "Amount due" : "Total"}
+              </dt>
               <dd className="font-extrabold text-ink">{formatEUR(order.totalEUR)}</dd>
             </div>
           </dl>
         </div>
       )}
 
-      {kind === "invoice" && (
+      {kind === "invoice" && order.paymentMethod === "invoice" && (
         <section className="mt-7 rounded-lg border border-line-strong p-4 text-[11.5px]">
           <h2 className="text-[10px] font-bold uppercase tracking-wide text-muted">Payment details</h2>
           <dl className="mt-2 grid grid-cols-2 gap-x-8 gap-y-1.5">

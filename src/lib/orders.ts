@@ -12,9 +12,80 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { BUYER_ADDRESS, BUYER_BILLING } from "@/data/seller";
 
 /** Finland's standard VAT rate since September 2024. */
 export const VAT_RATE = 0.255;
+
+/**
+ * A postal address as the checkout collects it.
+ *
+ * Postal code and city are separate fields rather than one "02770 Espoo" string:
+ * the moment the address became editable, a single field invited participants to
+ * type the two halves in either order, and the documents print them back in a fixed
+ * Finnish layout.
+ */
+export interface Address {
+  company: string;
+  contact: string;
+  street: string;
+  postalCode: string;
+  city: string;
+  country: string;
+}
+
+/** The countries Meconet ships springs to from Vantaa, for the country select. */
+export const DELIVERY_COUNTRIES = ["Finland", "Sweden", "Norway", "Denmark", "Estonia", "Germany"];
+
+export interface DeliveryOption {
+  id: string;
+  label: string;
+  detail: string;
+  /** Whole euros, like every other price in the prototype. */
+  priceEUR: number;
+}
+
+/**
+ * Three ways to get the box, because a checkout with one shipping row is not a
+ * decision and tells a usability session nothing. Collection is here because a
+ * workshop inside the ring road genuinely does drive to Vantaa for a part it needs
+ * the same afternoon.
+ */
+export const DELIVERY_OPTIONS: DeliveryOption[] = [
+  {
+    id: "standard",
+    label: "Standard parcel",
+    detail: "1–2 working days · Posti",
+    priceEUR: 0,
+  },
+  {
+    id: "express",
+    label: "Express parcel",
+    detail: "Next working day if ordered before 14:00",
+    priceEUR: 19,
+  },
+  {
+    id: "pickup",
+    label: "Collect from Vantaa",
+    detail: "Pavintie 8 · ready within 2 hours, weekdays 8–16",
+    priceEUR: 0,
+  },
+];
+
+export function deliveryOptionById(id: string): DeliveryOption {
+  return DELIVERY_OPTIONS.find((option) => option.id === id) ?? DELIVERY_OPTIONS[0];
+}
+
+/** Net terms Meconet offers an account customer. */
+export const PAYMENT_TERM_OPTIONS = [14, 21, 30, 45];
+
+export type PaymentMethod = "invoice" | "card";
+
+/** Who the invoice is addressed to, which is often not who placed the order. */
+export interface BillingDetails {
+  company: string;
+  businessId: string;
+}
 
 export interface OrderLine {
   slug: string;
@@ -49,8 +120,16 @@ export interface Order {
   costCentre: string;
   /** Where a copy of the invoice goes, usually not the person who ordered. */
   invoiceEmail: string;
+  /** Frozen at purchase, like the prices: where this particular box was sent. */
+  deliveryAddress: Address;
+  /** The chosen option snapshotted, so a later change to the price list cannot rewrite history. */
+  delivery: DeliveryOption;
+  paymentMethod: PaymentMethod;
+  billing: BillingDetails;
   lines: OrderLine[];
   subtotalEUR: number;
+  /** Delivery charge, VAT-exclusive like the lines. */
+  shippingEUR: number;
   vatEUR: number;
   totalEUR: number;
   /** Net payment terms in days. */
@@ -91,6 +170,10 @@ export interface DraftOrder {
   buyerReference: string;
   costCentre: string;
   invoiceEmail: string;
+  deliveryAddress: Address;
+  delivery: DeliveryOption;
+  paymentMethod: PaymentMethod;
+  billing: BillingDetails;
   paymentTermDays?: number;
 }
 
@@ -100,7 +183,11 @@ export function buildOrder(draft: DraftOrder, serial: number, now = new Date()):
     lineTotalEUR: line.unitPriceEUR * line.quantity,
   }));
   const subtotalEUR = lines.reduce((total, line) => total + line.lineTotalEUR, 0);
-  const vatEUR = Math.round(subtotalEUR * VAT_RATE);
+  const shippingEUR = draft.delivery.priceEUR;
+  // Delivery is taxed at the same rate as the goods in Finland, so VAT is charged on
+  // the carriage as well — getting this wrong is the sort of thing a participant's
+  // bookkeeper spots in a second.
+  const vatEUR = Math.round((subtotalEUR + shippingEUR) * VAT_RATE);
   const paymentTermDays = draft.paymentTermDays ?? 14;
 
   return {
@@ -112,12 +199,39 @@ export function buildOrder(draft: DraftOrder, serial: number, now = new Date()):
     buyerReference: draft.buyerReference,
     costCentre: draft.costCentre,
     invoiceEmail: draft.invoiceEmail,
+    deliveryAddress: draft.deliveryAddress,
+    delivery: draft.delivery,
+    paymentMethod: draft.paymentMethod,
+    billing: draft.billing,
     lines,
     subtotalEUR,
+    shippingEUR,
     vatEUR,
-    totalEUR: subtotalEUR + vatEUR,
+    totalEUR: subtotalEUR + shippingEUR + vatEUR,
     paymentTermDays,
     dueDate: addDays(now, paymentTermDays).toISOString(),
+  };
+}
+
+/**
+ * Fills in the fields an order predates.
+ *
+ * Orders are kept in localStorage, so a tester who placed one before the checkout
+ * collected an address still has it in their browser. Rather than let those orders
+ * render a document with holes in it, they are read back as having taken the account
+ * address and the standard delivery — which is exactly what they did.
+ */
+function normalizeOrder(order: Order): Order {
+  const delivery = order.delivery ?? DELIVERY_OPTIONS[0];
+  const shippingEUR = order.shippingEUR ?? delivery.priceEUR;
+
+  return {
+    ...order,
+    deliveryAddress: order.deliveryAddress ?? BUYER_ADDRESS,
+    delivery,
+    paymentMethod: order.paymentMethod ?? "invoice",
+    billing: order.billing ?? BUYER_BILLING,
+    shippingEUR,
   };
 }
 
@@ -134,7 +248,7 @@ export function useOrders() {
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) setOrders(JSON.parse(raw));
+      if (raw) setOrders((JSON.parse(raw) as Order[]).map(normalizeOrder));
     } catch {
       // An empty history is a perfectly good fallback.
     }
@@ -157,7 +271,9 @@ export function useOrders() {
       // would hand out a serial that is already taken.
       let existing: Order[] = [];
       try {
-        existing = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "[]");
+        existing = (JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "[]") as Order[]).map(
+          normalizeOrder,
+        );
       } catch {
         existing = [];
       }
@@ -203,7 +319,14 @@ export function documentState(order: Order, kind: DocumentKind): {
   if (kind === "delivery-note") {
     return order.status === "dispatched"
       ? { available: true, label: "Delivery note", note: "Packed with the parcel" }
-      : { available: false, label: "Delivery note", note: "Issued when the parcel leaves, in 1–2 working days" };
+      : {
+          available: false,
+          label: "Delivery note",
+          note:
+            order.delivery.id === "pickup"
+              ? "Issued when your order is picked, ready within 2 hours"
+              : `Issued when the parcel leaves · ${order.delivery.detail}`,
+        };
   }
   return order.status === "dispatched"
     ? { available: true, label: "Invoice", note: `${order.paymentTermDays} days net · due ${formatDate(order.dueDate)}` }

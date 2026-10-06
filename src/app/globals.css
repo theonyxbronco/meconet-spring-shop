@@ -23,6 +23,10 @@
   --color-stock: #15a44c;
   --color-stock-bg: #e7f7ee;
 
+  /* Form errors. The only red in the palette, kept dark enough to pass AA on white. */
+  --color-danger: #c42b38;
+  --color-danger-bg: #fdecee;
+
   --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
 
   --radius-card: 14px;

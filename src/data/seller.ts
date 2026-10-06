@@ -1,3 +1,5 @@
+import type { Address } from "@/lib/orders";
+
 /**
  * Letterhead details for the order documents.
  *
@@ -28,9 +30,30 @@ export const SELLER = {
 export const BUYER = {
   name: "Konepaja Virtanen Oy",
   street: "Teollisuuskatu 14",
-  postal: "02770 Espoo",
+  postalCode: "02770",
+  city: "Espoo",
   country: "Finland",
   businessId: "2748193-5",
   contact: "Jarmo Virtanen",
   email: "jarmo@konepajavirtanen.fi",
+};
+
+/**
+ * The account's address shaped the way the checkout and the documents want it.
+ * The checkout prefills its address fields from here and then owns a copy: once the
+ * form is editable, the order has to remember where it was actually sent rather than
+ * reading the account back at print time.
+ */
+export const BUYER_ADDRESS: Address = {
+  company: BUYER.name,
+  contact: BUYER.contact,
+  street: BUYER.street,
+  postalCode: BUYER.postalCode,
+  city: BUYER.city,
+  country: BUYER.country,
+};
+
+export const BUYER_BILLING = {
+  company: BUYER.name,
+  businessId: BUYER.businessId,
 };

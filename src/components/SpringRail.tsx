@@ -45,14 +45,26 @@ export function SpringRail({
   }, [readEdges]);
 
   // Keep the chosen card in view when the selection changes from elsewhere on the page.
-  // Only on a real change: arriving on the page is not a selection, and scrolling the
-  // carousel into view then drags the whole page down past the gallery. Comparing the id
-  // rather than tracking "have I mounted" also survives a Strict Mode double mount.
+  //
+  // It nudges the rail's own scrollLeft rather than calling scrollIntoView, which would
+  // drag the whole page along with it: arriving from a kit card with `?spring=` selects
+  // a spring a moment after mount, and `block: "nearest"` is no help when the rail is
+  // far below the fold — "nearest" still means scrolling the page down to it. Setting
+  // scrollLeft on the strip can only ever move the strip.
   const shown = useRef(selectedId);
   useEffect(() => {
     if (shown.current === selectedId) return;
     shown.current = selectedId;
-    cards.current.get(selectedId)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+    const strip = scroller.current;
+    const card = cards.current.get(selectedId);
+    if (!strip || !card) return;
+    // Rects rather than offsetLeft: the cards' offsetParent is the positioned wrapper
+    // around the strip, not the strip itself, so offsetLeft would be measured from the
+    // wrong edge.
+    const left = card.getBoundingClientRect().left - strip.getBoundingClientRect().left;
+    const right = left + card.offsetWidth - strip.clientWidth;
+    if (left < 0) strip.scrollTo({ left: strip.scrollLeft + left, behavior: "smooth" });
+    else if (right > 0) strip.scrollTo({ left: strip.scrollLeft + right, behavior: "smooth" });
   }, [selectedId]);
 
   const nudge = (direction: -1 | 1) => {
