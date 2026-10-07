@@ -29,11 +29,11 @@ scenario is a robotics workshop, so both live in the Mechatro Kit:
 
 | | Kit | Spring |
 |---|---|---|
-| **spring 1** | Mechatro Kit | compression, Ø5.5 × 40 mm, wire 1.00 |
-| **spring 2** | Mechatro Kit | extension, Ø8.0 × 44 mm, wire 1.20, full loops |
-| near-miss | Bike Kit | extension, Ø8.0 × 48 mm, wire 1.00, hooks |
-| near-miss | Garage Kit | extension, Ø7.0 × 45 mm, wire 0.90 |
-| in-kit | Mechatro Kit | compression, Ø9.0 × 43 mm, wire 2.20 |
+| **spring 1** | Mechatro Kit | compression, Ø5.5 × 40 mm, wire 0.50 |
+| **spring 2** | Mechatro Kit | extension, Ø8.0 × 46 mm, wire 1.20, full loops |
+| near-miss | Bike Kit | extension, Ø8.0 × 50 mm, wire 1.00, hooks |
+| near-miss | Garage Kit | extension, Ø7.0 × 47 mm, wire 0.90 |
+| in-kit | Mechatro Kit | compression, Ø5.0 × 44 mm, wire 0.90 |
 
 The near-misses are deliberate: a participant cannot pass the task on a glance at a
 thumbnail, they have to read dimensions or compare the part. The wire diameters of the
@@ -156,21 +156,21 @@ Photography is deliberately partial. The **Mechatro Kit** is the kit the test le
 (`public/springs`); every other kit renders from the generated artwork, which is derived
 from the same dimensions and so is never wrong, only plainer.
 
-A component's `drawings` are orthographic sheets. When a component has them, the Drawing
-view and the **Technical drawing** panel show those instead of the generated SVG, with a
+A component's `drawings` are orthographic sheets. When a component has them, the
+**Technical** view shows those instead of the generated SVG, with a
 thumbnail strip to step between sheets. The sheets are annotated `d`, `Do`, `Di`, `L0`,
 `p` — and `L1`, `L2`, `θ` for a torsion spring — which are exactly the symbols in the
 Ref. column of the specification table, so a dimension read off the sheet can be looked
 up directly.
 
-The Mechatro Kit's dimensions are not invented: outside diameter, free length, wire
-gauge and coil count were measured off its photographs, so the generated 3D model and
-the photograph of the same component show a spring of the same proportions. The
-exceptions are the two test springs, Ø5.5 × 40 and Ø8 × 44, whose length and diameter
-are fixed by the physical springs. Each was given to the photograph already showing a
-spring of those proportions, keeping that photograph's coil count, with the wire
-gauge chosen so the coils sit as they do in the photo. The Ø10 × 65 extension spring's
-photograph also reads a little shorter than its model.
+The Mechatro Kit's dimensions are not invented: the Basic box is the one in the
+opened-kit photograph (`public/kit-covers/Open_Kit.png`), so its twelve springs and their
+counts are the twelve on that lid label. Wire gauge and coil count were estimated from
+the photograph, and each spring was given the studio photograph closest to its
+proportions, so the generated 3D model and the photograph show a spring of the same
+shape. The two test springs, Ø5.5 × 40 and Ø8 × 46, have their length and diameter fixed
+by the physical springs. The Ø6 × 12 extension spring is shorter than its coils and two
+loops can be drawn, so its model runs a little over 12 mm.
 
 Coil count is what makes a spring look tight or stretched, and it is easy to get wrong
 by eye: a compression spring's pitch should land near 1.8 × its wire gauge (2.2 × the
@@ -183,9 +183,9 @@ For real CAD, set `modelUrl` on a component in `src/data/kits.ts` and load it in
 ## Notes for running a session
 
 - The home page *is* the shop: this is Meconet's B2C storefront, and every spring it
-  sells comes inside an assortment. So the spring-type tabs are not standalone ranges —
-  each one filters the assortments that contain that kind of spring (`/?type=extension`)
-  and says as much above the results. Spring band clamps, other springs, login,
+  sells comes inside an assortment. The spring-type tabs list every spring of that type
+  across all kits (`/springs/extension`), filterable by outside Ø and length; each spring
+  opens its kit with that spring selected. Spring band clamps, other springs, login,
   registration and downloads are inert and say so when clicked.
 - The category row hides itself on scroll and returns at the top of the page. The brand
   bar with the search field and the cart never moves.

@@ -330,7 +330,8 @@ export default function SpringViewer({ spring }: { spring: SpringComponent }) {
         </button>
       </div>
 
-      <p className="pointer-events-none absolute left-4 top-4 text-[12px] font-medium text-muted">
+      {/* Sits under the spring's name, which `SpringStage` lays over the top-left corner. */}
+      <p className="pointer-events-none absolute left-4 top-[78px] text-[12px] font-medium text-muted">
         Drag to rotate · scroll to zoom
       </p>
     </div>

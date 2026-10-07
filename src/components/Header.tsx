@@ -10,9 +10,10 @@ import { formatEUR, useCart } from "@/lib/cart";
 import { CartIcon, ChevronDownIcon, SearchIcon } from "./icons";
 
 /**
- * The catalogue row. None of these are standalone pages: every spring in the shop is
- * supplied inside an assortment, so a category tab filters the assortments that
- * contain that kind of spring rather than opening a range of its own.
+ * The catalogue row. Every spring in the shop is supplied inside an assortment, but
+ * people who know what kind of spring they hold come here first — so a category tab
+ * lists every spring of that type, each linking to the kit it comes in. A list of
+ * kits would not narrow anything: nearly every kit has every common type.
  */
 const CATALOGUE: { label: string; type?: SpringType }[] = [
   { label: "Compression Springs", type: "compression" },
@@ -259,10 +260,10 @@ function CatalogueBar({ onInert }: { onInert: (message: string) => void }) {
           item.type ? (
             <Link
               key={item.label}
-              href={`/?type=${item.type}#results`}
-              title="Supplied inside an assortment"
+              href={`/springs/${item.type}`}
+              title={`Every ${item.label.toLowerCase().replace(/s$/, "")} size, and the kit it comes in`}
               className={`flex shrink-0 items-center border-b-[3px] transition ${
-                onHome && activeType === item.type
+                pathname === `/springs/${item.type}`
                   ? "border-brand-500 font-semibold text-brand-600"
                   : "border-transparent text-ink/80 hover:text-brand-600"
               }`}

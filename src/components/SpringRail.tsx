@@ -95,7 +95,7 @@ export function SpringRail({
               aria-selected={active}
               title={`${component.code} — ${SPRING_TYPE_LABEL[component.type]}, Ø${component.outerDiameter} × ${component.freeLength} mm`}
               onClick={() => onSelect(component)}
-              className={`flex w-[124px] shrink-0 flex-col items-center rounded-lg border-2 bg-surface px-2 py-2 text-center transition ${
+              className={`flex w-[132px] shrink-0 flex-col items-center rounded-lg border-2 bg-surface px-2 py-2 text-center transition ${
                 active
                   ? "border-brand-500 shadow-card"
                   : "border-transparent shadow-card hover:border-brand-200"
@@ -112,7 +112,12 @@ export function SpringRail({
               >
                 {component.code}
               </p>
-              <p className="text-[11px] text-muted">{component.quantity} pcs</p>
+              <p className="w-full truncate text-[11px] font-medium text-ink-soft">
+                Ø{component.outerDiameter} × {component.freeLength} mm
+              </p>
+              <p className="w-full truncate text-[11px] text-muted">
+                {component.type === "disc" ? "t" : "wire"} {component.wireDiameter} · {component.quantity} pcs
+              </p>
             </button>
           );
         })}

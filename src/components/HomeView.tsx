@@ -1,8 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { kits } from "@/data/kits";
@@ -24,6 +22,7 @@ import {
 } from "@/lib/search";
 import { respond, suggestions, type ChatLink } from "@/lib/dialogue";
 import { ConversationPanel, type ChatMessage } from "./ConversationPanel";
+import { HeroBackdrop } from "./HeroBackdrop";
 import { KitCard } from "./KitCard";
 import { SelectPill } from "./SelectPill";
 import { ArrowRightIcon, FilterIcon, SearchIcon } from "./icons";
@@ -286,11 +285,8 @@ export function HomeView() {
 
   return (
     <>
-      {/* The fanned deck below is positioned with transforms that reach past its own
-          column — including the two invisible cards parked off to the side — and that
-          reach was adding a sideways scroll to the whole page. Clipped on the x axis
-          only, so the sticky/visible vertical layout is untouched. */}
-      <section className="hero-wash overflow-x-clip">
+      <section className="hero-wash relative">
+        <HeroBackdrop />
         {/* A single-cell grid holding both states. On the wide layout it gets a floor,
             so handing the hero over to the conversation does not snap the whole
             section a couple of hundred pixels shorter as the title leaves. */}
@@ -298,7 +294,7 @@ export function HomeView() {
           {/* The opening pitch and the conversation are stacked in one grid cell, so
               the one on its way out never pushes the one arriving: asking the first
               question hands the whole hero over to the thread, and the title, the
-              search bar and the fanned deck fade out from underneath it. Whatever is
+              search bar and the suggestions fade out from underneath it. Whatever is
               leaving stops taking clicks the moment it starts to go. */}
           <AnimatePresence initial={false}>
             {chatOpen ? (
@@ -336,53 +332,45 @@ export function HomeView() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -16, scale: 0.98, pointerEvents: "none" }}
                 transition={{ duration: 0.3, ease: "easeOut" }}
-                className="col-start-1 row-start-1 grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,44%)]"
+                className="col-start-1 row-start-1 flex flex-col items-center text-center"
               >
-                <div className="relative z-10 max-w-[760px]">
-                  <h1 className="text-[clamp(2.4rem,5.2vw,3.6rem)] font-extrabold leading-[1.08] tracking-tight text-ink">
-                    Let&rsquo;s find what you
-                    <br />
-                    are looking for.
-                  </h1>
-                  <p className="mt-4 max-w-[560px] text-[16.5px] leading-relaxed text-ink-soft">
-                    Not sure where to start? Describe the part and what it&rsquo;s for in your own
-                    words. If you have exact dimensions, include those too. Let&rsquo;s see what fits
-                    your project together!
-                  </p>
+                {/* The search is the page. Sessions showed people skipping it when it sat
+                    to one side of a picture of the kits, taking it for a secondary
+                    keyword box, so it now stands alone in the middle with as little
+                    around it as possible — every extra line is one more reason to skim. */}
+                <h1 className="text-[clamp(2.4rem,5.2vw,3.6rem)] font-extrabold leading-[1.08] tracking-tight text-ink">
+                  Let&rsquo;s find what you are looking for.
+                </h1>
 
-                  <form
-                    className="mt-8 flex items-center gap-3 rounded-full bg-surface p-2 pl-6 shadow-[0_10px_40px_rgba(11,46,94,0.12)]"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      start(input);
-                    }}
+                <form
+                  className="mt-9 flex w-full max-w-[780px] items-center gap-3 rounded-full bg-surface p-2.5 pl-7 shadow-[0_14px_50px_rgba(11,46,94,0.16)] ring-2 ring-brand-500/25 transition focus-within:ring-brand-500"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    start(input);
+                  }}
+                >
+                  <SearchIcon width={24} height={24} className="shrink-0 text-brand-500" />
+                  <input
+                    value={input}
+                    onChange={(event) => setInput(event.target.value)}
+                    placeholder="e.g. a spring that pulls a gate shut, or 12 × 38 mm"
+                    aria-label="Describe the spring you need, or enter its dimensions"
+                    className="w-full min-w-0 bg-transparent py-3.5 text-[17px] text-ink outline-none placeholder:text-muted"
+                  />
+                  <button
+                    type="submit"
+                    className="flex h-14 shrink-0 items-center gap-2 rounded-full bg-brand-500 px-4 text-[16px] font-bold text-white transition hover:bg-brand-600 sm:px-7"
                   >
-                    <SearchIcon width={22} height={22} className="shrink-0 text-ink/60" />
-                    <input
-                      value={input}
-                      onChange={(event) => setInput(event.target.value)}
-                      placeholder="Describe the spring, or paste its dimensions"
-                      aria-label="Describe the spring you need, or enter its dimensions"
-                      className="w-full bg-transparent py-3 text-[16px] outline-none placeholder:text-muted"
-                    />
-                    <button
-                      type="submit"
-                      aria-label="Start the spring finder"
-                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white transition hover:bg-brand-600"
-                    >
-                      <ArrowRightIcon width={22} height={22} />
-                    </button>
-                  </form>
+                    <span className="hidden sm:inline">Find my spring</span>
+                    <span className="sr-only sm:hidden">Find my spring</span>
+                    <ArrowRightIcon width={21} height={21} />
+                  </button>
+                </form>
 
-                  {/* Openers in a customer's own words — the way in for someone who has no spec. */}
-                  <div className="mt-6">
-                    <StarterGroup label="Search suggestions" prompts={describePrompts} onPick={start} />
-                  </div>
-                </div>
 
-                {/* The range, fanned: three lids at a size you can actually read. */}
-                <div className="relative hidden lg:block">
-                  <HeroKits />
+                {/* Openers in a customer's own words — the way in for someone who has no spec. */}
+                <div className="mt-6">
+                  <StarterGroup prompts={describePrompts} onPick={start} />
                 </div>
               </motion.div>
             )}
@@ -469,135 +457,23 @@ export function HomeView() {
 }
 
 function StarterGroup({
-  label,
   prompts,
   onPick,
 }: {
-  label: string;
   prompts: { text: string; kind: string }[];
   onPick: (text: string) => void;
 }) {
   return (
-    <div>
-      <p className="text-[12.5px] font-bold uppercase tracking-[0.12em] text-ink-soft/80">{label}</p>
-      <div className="mt-2 flex flex-wrap gap-2">
-        {prompts.map((prompt) => (
-          <button
-            key={prompt.text}
-            onClick={() => onPick(prompt.text)}
-            className="rounded-full border border-brand-100 bg-surface/70 px-4 py-2 text-left text-[13.5px] text-ink-soft transition hover:border-brand-400 hover:text-brand-600"
-          >
-            {prompt.text}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/**
- * The range, as a fanned deck of lids.
- *
- * Three cards are on show at a time — the front one readable, the two behind it
- * peeking out to say "there are more". The front card advances on a timer so the
- * whole range gets its turn, and the dots below make that reachable by keyboard
- * rather than leaving it to whoever waits longest.
- */
-const FAN_MS = 4000;
-
-/** Where each card sits, by how far it is behind the front one. */
-const SLOTS = [
-  { transform: "translate(0%, 0%) rotate(-2deg) scale(1)", z: 30, opacity: 1 },
-  { transform: "translate(13%, -6%) rotate(8deg) scale(0.93)", z: 20, opacity: 0.95 },
-  { transform: "translate(-13%, 6%) rotate(-12deg) scale(0.88)", z: 10, opacity: 0.9 },
-];
-
-/**
- * The card that just lost the front is lifted off the top of the deck, and the
- * ones still waiting are parked underneath the back of it. Both are invisible,
- * but *where* they are invisible is the whole trick: a card fading up from
- * nothing in the middle of the fan is what reads as broken.
- */
-const LIFTING = { transform: "translate(30%, -16%) rotate(12deg) scale(1.06)", z: 40, opacity: 0 };
-const PARKED = { transform: "translate(-22%, 12%) rotate(-18deg) scale(0.82)", z: 0, opacity: 0 };
-
-function HeroKits() {
-  const [active, setActive] = useState(0);
-  const [paused, setPaused] = useState(false);
-
-  useEffect(() => {
-    if (paused) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const timer = setInterval(() => setActive((current) => (current + 1) % kits.length), FAN_MS);
-    return () => clearInterval(timer);
-  }, [paused]);
-
-  const front = kits[active];
-
-  return (
-    <div
-      className="flex h-full w-full flex-col items-center justify-center gap-5"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-    >
-      <div className="relative aspect-[3/2] w-[86%]">
-        {kits.map((kit, index) => {
-          const offset = (index - active + kits.length) % kits.length;
-          const slot = SLOTS[offset] ?? (offset === kits.length - 1 ? LIFTING : PARKED);
-          const onShow = offset < SLOTS.length;
-          const isFront = offset === 0;
-
-          return (
-            <Link
-              key={kit.slug}
-              href={`/assortments/${kit.slug}`}
-              aria-label={`${kit.name} — view this assortment`}
-              aria-hidden={!isFront}
-              tabIndex={isFront ? undefined : -1}
-              style={{ transform: slot.transform, zIndex: slot.z, opacity: slot.opacity }}
-              className={`absolute inset-0 overflow-hidden rounded-[18px] shadow-[0_22px_60px_rgba(11,46,94,0.26)] ring-1 ring-white/50 transition-all duration-[650ms] ease-out ${
-                onShow ? "" : "pointer-events-none"
-              } ${isFront ? "hover:scale-[1.02]" : ""}`}
-            >
-              <Image
-                src={kit.coverImage}
-                alt={isFront ? `${kit.name} assortment lid` : ""}
-                fill
-                sizes="40vw"
-                loading="eager"
-                fetchPriority={isFront ? "high" : "auto"}
-                className="object-cover"
-              />
-              {/* A touch of gloss, so a flat label reads as a moulded lid. */}
-              <span
-                aria-hidden
-                className="absolute inset-0 bg-gradient-to-br from-white/25 via-transparent to-navy-900/15"
-              />
-              {!isFront && <span aria-hidden className="absolute inset-0 bg-brand-50/35" />}
-            </Link>
-          );
-        })}
-      </div>
-
-      <div className="flex items-center gap-3">
-        <p aria-live="polite" className="text-[14px] font-semibold text-ink">
-          {front.name}
-          <span className="font-normal text-muted"> · {kits.length} assortments</span>
-        </p>
-        <div className="flex gap-1.5">
-          {kits.map((kit, index) => (
-            <button
-              key={kit.slug}
-              onClick={() => setActive(index)}
-              aria-label={`Show the ${kit.name}`}
-              aria-current={index === active}
-              className={`h-2 w-2 rounded-full transition ${
-                index === active ? "bg-brand-500" : "bg-brand-500/30 hover:bg-brand-500/60"
-              }`}
-            />
-          ))}
-        </div>
-      </div>
+    <div role="group" aria-label="Search suggestions" className="flex flex-wrap justify-center gap-2">
+      {prompts.map((prompt) => (
+        <button
+          key={prompt.text}
+          onClick={() => onPick(prompt.text)}
+          className="rounded-full border border-brand-100 bg-surface/70 px-4 py-2 text-left text-[13.5px] text-ink-soft transition hover:border-brand-400 hover:text-brand-600"
+        >
+          {prompt.text}
+        </button>
+      ))}
     </div>
   );
 }

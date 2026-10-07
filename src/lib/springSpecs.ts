@@ -18,7 +18,7 @@ import {
  * reading `Sn` on the drawing can find the same `Sn` in the table.
  *
  * Nothing here is stored in `kits.ts`. Every derived figure comes back through
- * `springLimits`, so the table, the drawing and the carousel always agree.
+ * `springLimits`, so the table, the drawing and the 3D model always agree.
  */
 
 export interface SpecAttribute {
@@ -147,27 +147,50 @@ const coilRows = (spring: SpringComponent): SpecAttribute[] => [
   { label: "Total coils", ref: "ig", value: String(spring.coils), unit: "pcs" },
 ];
 
-/** Every attribute of a spring, in catalogue order. */
-export function specAttributes(spring: SpringComponent): SpecAttribute[] {
+export interface SpecGroup {
+  title: string;
+  rows: SpecAttribute[];
+}
+
+/**
+ * Every attribute of a spring, grouped the way a customer reads it: first the size
+ * they would measure off the part in hand — outside diameter, length, wire, the same
+ * order as "Ø5.5 × 40, wire 0.5" — then the coils, then what it does under load,
+ * and last what it is made of.
+ */
+export function specAttributes(spring: SpringComponent): SpecGroup[] {
   const limits = springLimits(limitInputFor(spring), spring.springRate);
   const metrics = springMetrics(spring);
   const rate = { label: "Spring rate", ref: "c", value: String(spring.springRate), unit: spring.rateUnit };
   const maxForce = spring.loadRange[1];
+  const wire = { label: "Wire diameter", ref: "d", value: fmt(spring.wireDiameter, 2), unit: "mm" };
+  const bodyLength = { label: "Body length", ref: "Lk", value: fmt(metrics.bodyLength), unit: "mm" };
+  const [outside, ...innerDiameters] = diameterRows(spring);
 
   if (spring.type === "extension") {
     return [
-      { label: "Wire diameter", ref: "d", value: fmt(spring.wireDiameter, 2), unit: "mm" },
-      { label: "Free length over hooks", ref: "L0", value: fmt(spring.freeLength), unit: "mm" },
-      { label: "Body length", ref: "Lk", value: fmt(metrics.bodyLength), unit: "mm" },
-      pitchRow(spring),
-      rate,
-      ...diameterRows(spring),
-      ...coilRows(spring),
-      { label: "Initial tension", ref: "F0", value: fmt(limits.initialTension ?? 0), unit: "N" },
-      { label: "Maximum extension", ref: "fn", value: fmt(limits.travel), unit: "mm" },
-      { label: "Maximum length", ref: "L1", value: fmt(limits.loadedLength ?? 0), unit: "mm" },
-      { label: "Force at maximum extension", ref: "Fn", value: fmt(maxForce), unit: "N" },
-      ...tailRows(spring, "Hooks"),
+      {
+        title: "Size",
+        rows: [
+          outside,
+          { label: "Free length over hooks", ref: "L0", value: fmt(spring.freeLength), unit: "mm" },
+          wire,
+          ...innerDiameters,
+          bodyLength,
+        ],
+      },
+      { title: "Coils", rows: [...coilRows(spring), pitchRow(spring)] },
+      {
+        title: "Load",
+        rows: [
+          rate,
+          { label: "Initial tension", ref: "F0", value: fmt(limits.initialTension ?? 0), unit: "N" },
+          { label: "Maximum extension", ref: "fn", value: fmt(limits.travel), unit: "mm" },
+          { label: "Maximum length", ref: "L1", value: fmt(limits.loadedLength ?? 0), unit: "mm" },
+          { label: "Force at maximum extension", ref: "Fn", value: fmt(maxForce), unit: "N" },
+        ],
+      },
+      { title: "Material and finish", rows: tailRows(spring, "Hooks") },
     ];
   }
 
@@ -175,24 +198,35 @@ export function specAttributes(spring: SpringComponent): SpecAttribute[] {
     const mandrel = innerDiameter(spring.outerDiameter, spring.wireDiameter) * 0.9;
     const angle = legAngle(spring.endType);
     return [
-      { label: "Wire diameter", ref: "d", value: fmt(spring.wireDiameter, 2), unit: "mm" },
-      // Both legs are drawn to the same length, so one figure covers L1 and L2.
-      { label: "Leg length, each", ref: "L1 = L2", value: fmt(spring.freeLength), unit: "mm" },
       {
-        label: "Angle between legs, unloaded",
-        ref: "θ",
-        ...(angle === undefined
-          ? { value: "Tangential" }
-          : { value: fmt(angle, 0), unit: "°" }),
+        title: "Size",
+        rows: [
+          outside,
+          // Both legs are drawn to the same length, so one figure covers L1 and L2.
+          { label: "Leg length, each", ref: "L1 = L2", value: fmt(spring.freeLength), unit: "mm" },
+          wire,
+          ...innerDiameters,
+          bodyLength,
+          {
+            label: "Angle between legs, unloaded",
+            ref: "θ",
+            ...(angle === undefined
+              ? { value: "Tangential" }
+              : { value: fmt(angle, 0), unit: "°" }),
+          },
+          { label: "Largest usable mandrel", value: fmt(mandrel), unit: "mm" },
+        ],
       },
-      { label: "Body length", ref: "Lk", value: fmt(metrics.bodyLength), unit: "mm" },
-      rate,
-      ...diameterRows(spring),
-      { label: "Coils", ref: "n", value: String(spring.coils), unit: "pcs" },
-      { label: "Maximum deflection angle", ref: "φn", value: fmt(limits.travel, 0), unit: "°" },
-      { label: "Moment at maximum deflection", ref: "Mn", value: fmt(maxForce), unit: "N·mm" },
-      { label: "Largest usable mandrel", value: fmt(mandrel), unit: "mm" },
-      ...tailRows(spring, "Legs"),
+      { title: "Coils", rows: [{ label: "Coils", ref: "n", value: String(spring.coils), unit: "pcs" }] },
+      {
+        title: "Load",
+        rows: [
+          rate,
+          { label: "Maximum deflection angle", ref: "φn", value: fmt(limits.travel, 0), unit: "°" },
+          { label: "Moment at maximum deflection", ref: "Mn", value: fmt(maxForce), unit: "N·mm" },
+        ],
+      },
+      { title: "Material and finish", rows: tailRows(spring, "Legs") },
     ];
   }
 
@@ -200,21 +234,31 @@ export function specAttributes(spring: SpringComponent): SpecAttribute[] {
     const outer = spring.outerDiameter;
     const inner = spring.innerDiameter ?? outer * 0.5;
     return [
-      { label: "Thickness", ref: "t", value: fmt(spring.wireDiameter, 2), unit: "mm" },
-      { label: "Outside diameter", ref: "De", value: fmt(outer, 2), unit: "mm" },
-      { label: "Bore diameter", ref: "Di", value: fmt(inner, 2), unit: "mm" },
-      { label: "Free height", ref: "l0", value: fmt(spring.freeLength, 2), unit: "mm" },
-      { label: "Cone height", ref: "h0", value: fmt(limits.coneHeight ?? 0, 2), unit: "mm" },
-      rate,
-      { label: "Deflection at 0.75 h0", ref: "s", value: fmt(limits.travel, 2), unit: "mm" },
-      { label: "Force at 0.75 h0", ref: "F", value: fmt(maxForce, 0), unit: "N" },
       {
-        label: "Height under load",
-        ref: "l",
-        value: fmt(spring.freeLength - limits.travel, 2),
-        unit: "mm",
+        title: "Size",
+        rows: [
+          { label: "Outside diameter", ref: "De", value: fmt(outer, 2), unit: "mm" },
+          { label: "Free height", ref: "l0", value: fmt(spring.freeLength, 2), unit: "mm" },
+          { label: "Thickness", ref: "t", value: fmt(spring.wireDiameter, 2), unit: "mm" },
+          { label: "Bore diameter", ref: "Di", value: fmt(inner, 2), unit: "mm" },
+          { label: "Cone height", ref: "h0", value: fmt(limits.coneHeight ?? 0, 2), unit: "mm" },
+        ],
       },
-      ...tailRows(spring, "Series"),
+      {
+        title: "Load",
+        rows: [
+          rate,
+          { label: "Deflection at 0.75 h0", ref: "s", value: fmt(limits.travel, 2), unit: "mm" },
+          {
+            label: "Height under load",
+            ref: "l",
+            value: fmt(spring.freeLength - limits.travel, 2),
+            unit: "mm",
+          },
+          { label: "Force at 0.75 h0", ref: "F", value: fmt(maxForce, 0), unit: "N" },
+        ],
+      },
+      { title: "Material and finish", rows: tailRows(spring, "Series") },
     ];
   }
 
@@ -224,33 +268,61 @@ export function specAttributes(spring: SpringComponent): SpecAttribute[] {
   const travelLabel = isDie ? "Maximum deflection" : "Maximum compression";
 
   return [
-    section
-      ? {
-          label: "Wire section, width × height",
-          ref: "b × h",
-          value: `${fmt(section.width, 2)} × ${fmt(section.height, 2)}`,
-          unit: "mm",
-        }
-      : { label: "Wire diameter", ref: "d", value: fmt(spring.wireDiameter, 2), unit: "mm" },
-    { label: "Free length", ref: "L0", value: fmt(spring.freeLength), unit: "mm" },
-    pitchRow(spring),
-    rate,
-    ...diameterRows(spring),
-    ...coilRows(spring),
-    ...(isDie
-      ? [
-          {
-            label: "Load class",
-            value: `${dieLoadClass(spring.endType)} — marked ${DIE_COLOUR[dieLoadClass(spring.endType)]}`,
-          } satisfies SpecAttribute,
-        ]
-      : []),
-    { label: travelLabel, ref: "Sn", value: fmt(limits.travel), unit: "mm" },
-    { label: "Loaded length at Sn", ref: "Ln", value: fmt(limits.loadedLength ?? 0), unit: "mm" },
-    { label: `Force at ${travelLabel.toLowerCase()}`, ref: "Fn", value: fmt(maxForce), unit: "N" },
-    { label: "Solid length", ref: "Lc", value: fmt(limits.solidLength ?? 0), unit: "mm" },
-    ...tailRows(spring, "Ends"),
+    {
+      title: "Size",
+      rows: [
+        outside,
+        { label: "Free length", ref: "L0", value: fmt(spring.freeLength), unit: "mm" },
+        section
+          ? {
+              label: "Wire section, width × height",
+              ref: "b × h",
+              value: `${fmt(section.width, 2)} × ${fmt(section.height, 2)}`,
+              unit: "mm",
+            }
+          : wire,
+        ...innerDiameters,
+      ],
+    },
+    { title: "Coils", rows: [...coilRows(spring), pitchRow(spring)] },
+    {
+      title: "Load",
+      rows: [
+        ...(isDie
+          ? [
+              {
+                label: "Load class",
+                value: `${dieLoadClass(spring.endType)} — marked ${DIE_COLOUR[dieLoadClass(spring.endType)]}`,
+              } satisfies SpecAttribute,
+            ]
+          : []),
+        rate,
+        { label: travelLabel, ref: "Sn", value: fmt(limits.travel), unit: "mm" },
+        { label: "Loaded length at Sn", ref: "Ln", value: fmt(limits.loadedLength ?? 0), unit: "mm" },
+        { label: `Force at ${travelLabel.toLowerCase()}`, ref: "Fn", value: fmt(maxForce), unit: "N" },
+        { label: "Solid length", ref: "Lc", value: fmt(limits.solidLength ?? 0), unit: "mm" },
+      ],
+    },
+    { title: "Material and finish", rows: tailRows(spring, "Ends") },
   ];
+}
+
+/**
+ * The handful of figures someone checks first — size, coils, stiffness, the most it
+ * will take — picked out of the full sheet so the two can never disagree. Shown
+ * under the 3D model, so the essentials are read without opening the table.
+ */
+export function keyFigures(spring: SpringComponent): SpecAttribute[] {
+  const rows = specAttributes(spring).flatMap((group) => group.rows);
+  const byRef = (...refs: string[]) => rows.find((row) => row.ref !== undefined && refs.includes(row.ref));
+  return [
+    byRef("Do", "De"),
+    byRef("L0", "L1 = L2", "l0"),
+    byRef("d", "b × h", "t"),
+    byRef("ig", "n"),
+    byRef("c"),
+    byRef("Fn", "Mn", "F"),
+  ].filter((row): row is SpecAttribute => row !== undefined);
 }
 
 /** Mean-diameter tolerance to EN 15800, rounded to the nearest 0.05 mm. */

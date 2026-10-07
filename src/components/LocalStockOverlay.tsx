@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import {
   DEMO_LOCATION,
@@ -49,7 +50,9 @@ export function LocalStockOverlay({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  return (
+  // Rendered into <body>: opened from the purchase panel, which is sticky and so
+  // its own stacking context, it would otherwise sit under the springs beside it.
+  return createPortal(
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -185,7 +188,8 @@ export function LocalStockOverlay({
           Meconet order history, so stock is not guaranteed and prices are set by the workshop.
         </p>
       </motion.div>
-    </motion.div>
+    </motion.div>,
+    document.body,
   );
 }
 

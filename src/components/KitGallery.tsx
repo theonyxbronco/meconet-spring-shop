@@ -1,179 +1,124 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { KitBoxArt, KitShot, SpringPhoto } from "@/assets/brand";
-import type { Kit, KitPhoto, KitTier, SpringComponent } from "@/data/types";
+import { KitBoxArt, KitShot } from "@/assets/brand";
+import type { Kit, KitPhoto, KitTier } from "@/data/types";
 import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, ZoomIcon } from "./icons";
 
-type Slide = { key: string; label: string; spring?: SpringComponent; photo?: KitPhoto };
+type Slide = { key: string; label: string; photo?: KitPhoto };
 
-export function KitGallery({
-  kit,
-  components,
-  tier,
-}: {
-  kit: Kit;
-  components: SpringComponent[];
-  tier: KitTier;
-}) {
-  // The kit's own photographs follow the lid, before the springs are shown one by
-  // one. A photograph of one build's contents is wrong for the other, so a shot
-  // that names a tier only appears on that tier.
+/**
+ * The kit as a product: its lid and its own photographs, as thumbnails that open
+ * large.
+ *
+ * The springs used to follow here, one slide each, and sessions showed people
+ * identifying their spring from those photographs instead of the 3D model below.
+ * The springs now live only in the rail and `SpringStage`, so this stays about the
+ * box.
+ */
+export function KitGallery({ kit, tier }: { kit: Kit; tier: KitTier }) {
+  // A photograph of one build's contents is wrong for the other, so a shot that
+  // names a tier only appears on that tier.
   const shots = (kit.galleryImages ?? []).filter((photo) => !photo.tier || photo.tier === tier);
 
   const slides: Slide[] = [
     { key: "box", label: `${kit.name} assortment box` },
     ...shots.map((photo) => ({ key: photo.src, label: photo.label, photo })),
-    ...components.map((spring) => ({
-      key: spring.id,
-      label: `${spring.name}, ${spring.code}`,
-      spring,
-    })),
   ];
 
-  const [index, setIndex] = useState(0);
-  const [zoomed, setZoomed] = useState(false);
-  // Switching to the shorter Basic list can leave the index past the end of it.
-  const active = slides[Math.min(index, slides.length - 1)];
-  const rail = useRef<HTMLDivElement>(null);
-
-  // The rail holds every spring in the kit, so it scrolls — stepping through with the
-  // arrows has to bring the matching thumbnail back into view. It nudges the rail's own
-  // scrollTop rather than calling scrollIntoView, which would drag the whole page along
-  // with it, and it sits out the first render so that merely opening the page is still.
-  const shown = useRef(index);
-  useEffect(() => {
-    if (shown.current === index) return;
-    shown.current = index;
-    const strip = rail.current;
-    const thumb = strip?.children[index] as HTMLElement | undefined;
-    if (!strip || !thumb) return;
-    const above = thumb.offsetTop - strip.scrollTop;
-    const below = thumb.offsetTop + thumb.offsetHeight - (strip.scrollTop + strip.clientHeight);
-    if (above < 0) strip.scrollTo({ top: thumb.offsetTop, behavior: "smooth" });
-    else if (below > 0) strip.scrollTo({ top: strip.scrollTop + below, behavior: "smooth" });
-  }, [index]);
+  const [open, setOpen] = useState<number | null>(null);
+  // Switching to the other tier can take away the shot that is open.
+  const active = open === null ? null : slides[Math.min(open, slides.length - 1)];
 
   const step = (direction: -1 | 1) =>
-    setIndex((current) => (current + direction + slides.length) % slides.length);
+    setOpen((current) => ((current ?? 0) + direction + slides.length) % slides.length);
+
+  useEffect(() => {
+    if (open === null) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(null);
+      else if (event.key === "ArrowLeft") step(-1);
+      else if (event.key === "ArrowRight") step(1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
 
   const render = (slide: Slide, className: string) =>
-    slide.spring ? (
-      <SpringPhoto spring={slide.spring} className={className} />
-    ) : slide.photo ? (
+    slide.photo ? (
       <KitShot photo={slide.photo} className={className} />
     ) : (
       <KitBoxArt kit={kit} className={className} />
     );
 
-  /*
-   * Every lid and every studio photograph is 3:2, so the stage is cut to 3:2 as well
-   * and that artwork reaches all four edges; anything squarer is contained inside it
-   * rather than cropped. The stage fills the column, which means
-   * its width sets its height — so the rail beside it is taken out of flow and
-   * stretched to whatever the stage works out to be, rather than being told a height
-   * of its own that would only match at one window size.
-   */
   return (
-    <div className="grid grid-cols-[64px_minmax(0,1fr)] gap-5">
-      <div className="relative">
-        <div
-          ref={rail}
-          className="no-scrollbar absolute inset-0 flex flex-col gap-2.5 overflow-y-auto"
-        >
-          {slides.map((slide, slideIndex) => (
+    <>
+      <ul className="flex gap-2.5">
+        {slides.map((slide, index) => (
+          <li key={slide.key}>
             <button
-              key={slide.key}
-              onClick={() => setIndex(slideIndex)}
-              aria-label={`Show ${slide.label}`}
-              aria-current={slides[slideIndex].key === active.key}
-              className={`flex h-[60px] shrink-0 items-center justify-center rounded-lg border-2 bg-surface p-1.5 transition ${
-                slides[slideIndex].key === active.key ? "border-brand-500" : "border-line hover:border-brand-100"
-              }`}
+              onClick={() => setOpen(index)}
+              aria-label={`Enlarge ${slide.label}`}
+              title={slide.label}
+              className="group relative flex h-[76px] w-[112px] items-center justify-center rounded-lg border border-line bg-gradient-to-b from-brand-50 to-brand-50/40 p-1.5 transition hover:border-brand-400"
             >
               {render(slide, "h-full w-full")}
+              <span className="absolute bottom-1.5 right-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-surface/85 text-ink opacity-70 transition group-hover:opacity-100">
+                <ZoomIcon width={13} height={13} />
+              </span>
             </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="relative aspect-[3/2] min-w-0 overflow-hidden rounded-xl bg-gradient-to-b from-brand-50 to-brand-50/40">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={active.key}
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.2 }}
-            className="absolute inset-0"
-          >
-            {render(active, "h-full w-full")}
-          </motion.div>
-        </AnimatePresence>
-
-        <button
-          onClick={() => step(-1)}
-          aria-label="Previous image"
-          className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-surface text-ink shadow-card transition hover:text-brand-600"
-        >
-          <ChevronLeftIcon width={19} height={19} />
-        </button>
-        <button
-          onClick={() => step(1)}
-          aria-label="Next image"
-          className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-surface text-ink shadow-card transition hover:text-brand-600"
-        >
-          <ChevronRightIcon width={19} height={19} />
-        </button>
-
-        <button
-          onClick={() => setZoomed(true)}
-          aria-label="Enlarge image"
-          className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-surface/80 text-ink transition hover:text-brand-600"
-        >
-          <ZoomIcon width={19} height={19} />
-        </button>
-
-        <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2">
-          {slides.map((slide, slideIndex) => (
-            <button
-              key={slide.key}
-              onClick={() => setIndex(slideIndex)}
-              aria-label={`Go to image ${slideIndex + 1}`}
-              className={`h-2 w-2 rounded-full transition ${
-                slides[slideIndex].key === active.key ? "bg-brand-500" : "bg-brand-500/30"
-              }`}
-            />
-          ))}
-        </div>
-      </div>
+          </li>
+        ))}
+      </ul>
 
       <AnimatePresence>
-        {zoomed && (
+        {active && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setZoomed(false)}
+            onClick={() => setOpen(null)}
             className="fixed inset-0 z-[70] flex items-center justify-center bg-navy-900/75 p-8 backdrop-blur-sm"
             role="dialog"
             aria-label={active.label}
           >
             <button
-              onClick={() => setZoomed(false)}
+              onClick={() => setOpen(null)}
               aria-label="Close enlarged image"
               className="absolute right-6 top-6 rounded-full bg-surface p-2.5 text-ink"
             >
               <CloseIcon width={20} height={20} />
             </button>
-            <div className="w-full max-w-[1000px] rounded-2xl bg-surface p-10">
+            <div
+              onClick={(event) => event.stopPropagation()}
+              className="relative w-full max-w-[1000px] rounded-2xl bg-surface p-10"
+            >
               {render(active, "h-[60vh] w-full")}
               <p className="mt-4 text-center text-[14px] text-muted">{active.label}</p>
+
+              {slides.length > 1 && (
+                <>
+                  <button
+                    onClick={() => step(-1)}
+                    aria-label="Previous image"
+                    className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-surface text-ink shadow-card transition hover:text-brand-600"
+                  >
+                    <ChevronLeftIcon width={19} height={19} />
+                  </button>
+                  <button
+                    onClick={() => step(1)}
+                    aria-label="Next image"
+                    className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-surface text-ink shadow-card transition hover:text-brand-600"
+                  >
+                    <ChevronRightIcon width={19} height={19} />
+                  </button>
+                </>
+              )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </>
   );
 }
