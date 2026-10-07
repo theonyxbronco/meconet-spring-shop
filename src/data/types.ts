@@ -49,7 +49,7 @@ export interface SpringComponent {
   photoUrl?: string;
   /**
    * Orthographic drawing sheets for this part, most representative first. When a
-   * component has these, the Drawing view shows them instead of the generated SVG.
+   * component has these, the Technical view shows them instead of the generated SVG.
    */
   drawings?: string[];
 }

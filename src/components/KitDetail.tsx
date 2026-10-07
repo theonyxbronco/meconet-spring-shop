@@ -7,6 +7,7 @@ import { KitGallery } from "./KitGallery";
 import { PurchasePanel } from "./PurchasePanel";
 import { IncludedSprings } from "./IncludedSprings";
 import { ComponentDetail } from "./ComponentDetail";
+import { SpringStage } from "./SpringStage";
 import { kitVariant } from "@/data/kits";
 import type { Kit, KitTier } from "@/data/types";
 
@@ -49,33 +50,47 @@ export function KitDetail({ kit }: { kit: Kit }) {
       </nav>
 
       {/* The title sits inside the left column rather than above both, so the panel on
-          the right starts level with it instead of below the whole introduction. */}
+          the right starts level with it instead of below the whole introduction.
+
+          The springs lead: the rail and the 3D model of the one picked from it are the
+          first thing under the title, because sessions showed people identifying their
+          spring from photographs when the model was further down. The kit's own
+          photographs stay, as thumbnails beside the introduction. */}
       <section className="mx-auto max-w-[1320px] px-5 pb-12 pt-9">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1.65fr)_minmax(320px,1fr)]">
-          <div className="min-w-0">
-            <h1 className="text-[clamp(2.2rem,4.4vw,3.1rem)] font-extrabold leading-tight tracking-tight text-ink">
-              {variant.name}
-            </h1>
-            <p className="mt-3 max-w-[620px] text-[15.5px] leading-relaxed text-ink-soft">
-              {variant.description}
-            </p>
-            <div className="mt-7">
-              <KitGallery kit={kit} components={variant.components} tier={tier} />
+          <div className="flex min-w-0 flex-wrap items-end justify-between gap-x-6 gap-y-4 lg:col-start-1">
+            <div className="min-w-0 max-w-[480px]">
+              <h1 className="text-[clamp(2.2rem,4.4vw,3.1rem)] font-extrabold leading-tight tracking-tight text-ink">
+                {variant.name}
+              </h1>
+              <p className="mt-3 text-[15.5px] leading-relaxed text-ink-soft">{variant.description}</p>
             </div>
+            <KitGallery kit={kit} tier={tier} />
           </div>
 
-          <PurchasePanel kit={kit} variant={variant} tier={tier} onTier={setTier} />
+          {/* Second in the markup so that on a phone, where everything is one column,
+              the price and the button come before the long run of spring details
+              rather than after it. On a wide screen it spans both rows on the right. */}
+          <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
+            <PurchasePanel kit={kit} variant={variant} tier={tier} onTier={setTier} />
+          </div>
+
+          <div className="min-w-0 rounded-2xl border border-line bg-brand-50 p-5 lg:col-start-1">
+            <IncludedSprings
+              title={`What's included in the ${variant.name}?`}
+              components={variant.components}
+              selectedId={selected.id}
+              onSelect={(component) => setSelectedId(component.id)}
+            />
+            <div className="mt-1">
+              <SpringStage spring={selected} />
+            </div>
+            <div className="mt-5">
+              <ComponentDetail spring={selected} />
+            </div>
+          </div>
         </div>
       </section>
-
-      <IncludedSprings
-        title={`What's included in the ${variant.name}?`}
-        components={variant.components}
-        selectedId={selected.id}
-        onSelect={(component) => setSelectedId(component.id)}
-      />
-
-      <ComponentDetail spring={selected} />
     </>
   );
 }

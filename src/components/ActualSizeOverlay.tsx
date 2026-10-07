@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { SpringArt } from "@/assets/brand";
 import { springProfile } from "@/lib/springProfile";
@@ -30,7 +31,9 @@ export function ActualSizeOverlay({ spring, onClose }: { spring: SpringComponent
   const widthPx = viewWidth * pxPerMm;
   const heightPx = viewHeight * pxPerMm;
 
-  return (
+  // Rendered into <body>, so no sticky or transformed ancestor can trap it under
+  // the rest of the page.
+  return createPortal(
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -84,7 +87,8 @@ export function ActualSizeOverlay({ spring, onClose }: { spring: SpringComponent
           <ScaleCalibrator pxPerMm={pxPerMm} onChange={save} />
         </div>
       </motion.div>
-    </motion.div>
+    </motion.div>,
+    document.body,
   );
 }
 

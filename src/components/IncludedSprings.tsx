@@ -12,12 +12,14 @@ type View = "rail" | "grid";
 const TYPE_ORDER: SpringType[] = ["compression", "extension", "torsion", "die", "disc"];
 
 /**
- * Everything in the box.
+ * Everything in the box — the way into the kit. It sits right above `SpringStage`,
+ * so picking a spring puts its 3D model in front of you without leaving the top of
+ * the page.
  *
- * The rail is the quick way past: one row, scrolled through while the detail below
+ * The rail is the quick way past: one row, scrolled through while the model below
  * keeps up. The grid is for the opposite job — seeing the whole assortment laid out
  * at once, sorted into its spring types, the way the compartments in the real box
- * are. Picking a spring in either one opens it in the detail below.
+ * are. Picking a spring in either one opens it below.
  */
 export function IncludedSprings({
   title,
@@ -40,59 +42,62 @@ export function IncludedSprings({
   const pieces = components.reduce((total, component) => total + component.quantity, 0);
 
   return (
-    <section id="included-springs" className="border-y border-line bg-brand-50/60 py-6">
-      <div className="mx-auto max-w-[1320px] px-5">
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-          <h2 className="text-[19px] font-extrabold tracking-tight text-ink">{title}</h2>
-          <div className="flex items-center gap-3">
-            <p className="text-[13px] text-muted">
-              {components.length} spring types · {pieces} pieces · pick one to see it below
-            </p>
-            <div
-              role="group"
-              aria-label="How to show the springs"
-              className="flex gap-1 rounded-full border border-line bg-surface p-1"
-            >
-              <ViewButton active={view === "rail"} onClick={() => setView("rail")} label="Rail">
-                <CarouselIcon width={15} height={15} />
-              </ViewButton>
-              <ViewButton active={view === "grid"} onClick={() => setView("grid")} label="Grid">
-                <GridIcon width={15} height={15} />
-              </ViewButton>
-            </div>
+    // A fragment, not a wrapper: the rail sticks to the top of the screen for as long
+    // as the card around it is in view, so it has to be a child of that card. Reading
+    // the details further down, the next spring is still one click away.
+    <>
+      <div id="included-springs" className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <h2 className="text-[19px] font-extrabold tracking-tight text-ink">{title}</h2>
+        <div className="flex items-center gap-3">
+          <p className="text-[13px] text-muted">
+            {components.length} spring types · {pieces} pieces · pick one to see it in 3D
+          </p>
+          <div
+            role="group"
+            aria-label="How to show the springs"
+            className="flex gap-1 rounded-full border border-line bg-surface p-1"
+          >
+            <ViewButton active={view === "rail"} onClick={() => setView("rail")} label="Rail">
+              <CarouselIcon width={15} height={15} />
+            </ViewButton>
+            <ViewButton active={view === "grid"} onClick={() => setView("grid")} label="Grid">
+              <GridIcon width={15} height={15} />
+            </ViewButton>
           </div>
         </div>
-
-        {view === "rail" ? (
-          <SpringRail components={components} selectedId={selectedId} onSelect={onSelect} />
-        ) : (
-          <div className="mt-4 space-y-5">
-            {groups.map((group) => (
-              <div key={group.type}>
-                <h3 className="text-[12.5px] font-bold uppercase tracking-[0.12em] text-ink-soft/80">
-                  {SPRING_TYPE_LABEL[group.type]}s
-                  <span className="ml-2 font-medium normal-case tracking-normal text-muted">
-                    {group.springs.length}{" "}
-                    {group.springs.length === 1 ? "size" : "sizes"}
-                  </span>
-                </h3>
-                <ul className="mt-2 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {group.springs.map((spring) => (
-                    <li key={spring.id}>
-                      <GridCard
-                        spring={spring}
-                        active={spring.id === selectedId}
-                        onSelect={() => onSelect(spring)}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
-    </section>
+
+      {view === "rail" ? (
+        <div className="sticky top-[calc(var(--header-offset)-16px)] z-20 -mx-5 bg-brand-50 px-5 pb-3 pt-px">
+          <SpringRail components={components} selectedId={selectedId} onSelect={onSelect} />
+        </div>
+      ) : (
+        <div className="mt-4 space-y-5">
+          {groups.map((group) => (
+            <div key={group.type}>
+              <h3 className="text-[12.5px] font-bold uppercase tracking-[0.12em] text-ink-soft/80">
+                {SPRING_TYPE_LABEL[group.type]}s
+                <span className="ml-2 font-medium normal-case tracking-normal text-muted">
+                  {group.springs.length}{" "}
+                  {group.springs.length === 1 ? "size" : "sizes"}
+                </span>
+              </h3>
+              <ul className="mt-2 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+                {group.springs.map((spring) => (
+                  <li key={spring.id}>
+                    <GridCard
+                      spring={spring}
+                      active={spring.id === selectedId}
+                      onSelect={() => onSelect(spring)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
   );
 }
 

@@ -12,14 +12,14 @@ user brought in and choose the kit that best fits the workshop.
 | | Spring | What it looks like |
 |---|---|---|
 | **1** | Compression, Ø5.5 × 40 mm | Long and thin, open coils, flat ends, no hooks |
-| **2** | Extension, Ø8 × 44 mm | Coils touching, a full loop at each end |
+| **2** | Extension, Ø8 × 46 mm | Coils touching, a full loop at each end |
 
-**The correct answer:** the **Mechatro Kit** (part 2734689, €112). It holds both:
+**The correct answer:** the **Mechatro Kit** (part 2734689, €20). It holds both:
 
 | | Code | Spec | In the box |
 |---|---|---|---|
-| 1 | VC01000550400S | compression, Ø5.5 × 40 mm, wire 1.00, stainless | 12 pcs |
-| 2 | VE01200800440S | extension, Ø8 × 44 mm, wire 1.20, full loops, stainless | 10 pcs |
+| 1 | VC00500550400S | compression, Ø5.5 × 40 mm, wire 0.50, stainless | 10 pcs |
+| 2 | VE01200800460S | extension, Ø8 × 46 mm, wire 1.20, full loops, stainless | 10 pcs |
 
 > The springs' numbers live in `src/data/kits.ts` (the components flagged `target: true`).
 > The wire diameters are estimates fitted to the product photos — **measure the real
@@ -28,16 +28,16 @@ user brought in and choose the kit that best fits the workshop.
 
 The finder works whether a participant is handed one spring or both. With both, they
 find the first, then type the second into the chat (*"I also have an extension spring,
-8 × 44"*) — it re-ranks and points at the second spring in the same kit.
+8 × 46"*) — it re-ranks and points at the second spring in the same kit.
 
 ## Decoys the participant must rule out
 
 | Kit | Spring | Why it is wrong | How they would notice |
 |---|---|---|---|
-| Bike Kit | extension Ø8 × 48, wire 1.00, hooks | 4 mm longer, hooks not loops | 1:1 view: overhangs; open hooks in 3D |
-| Garage Kit | extension Ø7 × 45, wire 0.90, loops | 1 mm narrower | 1:1 view; spec Do 7.0 |
-| Mechatro Kit (same box) | compression Ø9 × 43, wire 2.20 | Same length class, much fatter | Obvious in 1:1 view / 3D |
-| Mechatro Kit (same box) | extension Ø14 × 57 | Same kind, far bigger | Obvious in 1:1 view |
+| Bike Kit | extension Ø8 × 50, wire 1.00, hooks | 4 mm longer, hooks not loops | 1:1 view: overhangs; open hooks in 3D |
+| Garage Kit | extension Ø7 × 47, wire 0.90, loops | 1 mm narrower, 1 mm longer | 1:1 view; spec Do 7.0 |
+| Mechatro Kit (same box) | compression Ø5 × 44, wire 0.90 | Half a millimetre narrower, 4 mm longer, thicker wire | 1:1 view; spec L0 44 |
+| Mechatro Kit (same box) | extension Ø8 × 28 | Same diameter and loops, far shorter | Obvious in 1:1 view |
 
 Spring 2 has strong decoys in other kits. Spring 1 has none close in another kit — its
 nearest look-alikes are in its own box, so Task 3 is about picking the right spring
@@ -54,11 +54,11 @@ most likely openings, and what happens:
 
 | They type | The finder |
 |---|---|
-| `5.5x40`, `5,5 x 40 mm`, `40mm long 5.5mm wide`, `Ø5.5×40` | Skips the questions. *"Found it: Mechatro Kit contains VC01000550400S…"* |
-| `8x44`, `extension spring 8 x 44`, `44x8`, `Zugfeder 8x44` | Skips the questions. *"Found it: Mechatro Kit contains VE01200800440S…"* |
+| `5.5x40`, `5,5 x 40 mm`, `40mm long 5.5mm wide`, `Ø5.5×40` | Skips the questions. *"Found it: Mechatro Kit contains VC00500550400S…"* |
+| `8x46`, `extension spring 8 x 46`, `46x8`, `Zugfeder 8x46` | Skips the questions. *"Found it: Mechatro Kit contains VE01200800460S…"* |
 | `spring for our robotics workshop`, `robot project spring` | Notes it silently (never repeats the end use back), then asks what the spring does |
 | `spring with loops at each end`, `flat ends, no hooks`, `it stretches` | Picks up pull or push, asks only what is missing |
-| `40mm`, `about 4.4 cm` | Takes it as the length; after the questions says Mechatro has one *exactly that long* and asks them to check the width |
+| `40mm`, `about 4.6 cm` | Takes it as the length; after the questions says Mechatro has one *exactly that long* and asks them to check the width |
 | `I don't know`, `hello`, gibberish | Reassures, then asks what the spring does |
 
 The questions, and the answer that is true for each spring:
@@ -66,7 +66,7 @@ The questions, and the answer that is true for each spring:
 | Question | Spring 1 (compression) | Spring 2 (extension) |
 |---|---|---|
 | What does the spring need to do? | *Push two things apart* | *Pull two things together* |
-| Roughly how long is it? | *Coin to palm width* (or type `40`) | *Coin to palm width* (or type `44`) |
+| Roughly how long is it? | *Coin to palm width* (or type `40`) | *Coin to palm width* (or type `46`) |
 | Where does the part spend its life? | *Indoors and dry* | *Indoors and dry* |
 
 The third question is skipped if they said "workshop", "lab", "classroom" or "inside".
@@ -74,7 +74,7 @@ They can click **or type** — `2`, `the second one`, `it pushes`, `it has loops
 `about 4 cm`, `inside` all work.
 
 **On track when:** the Mechatro Kit is the top card, its chip names the right spring
-(*Includes VC01000550400S · Ø5.5 × 40 mm* or *Includes VE01200800440S · Ø8 × 44 mm*),
+(*Includes VC00500550400S · Ø5.5 × 40 mm* or *Includes VE01200800460S · Ø8 × 46 mm*),
 and the chat shows **Open the Mechatro Kit at …**.
 
 ### Task 2 — Inspect

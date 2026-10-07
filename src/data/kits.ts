@@ -1,5 +1,5 @@
 import { buildComponent, type SpecInput } from "./build";
-import { TIER_LABEL, type Kit, type KitTier, type KitUpgrade, type SpringComponent } from "./types";
+import { TIER_LABEL, type Kit, type KitTier, type KitUpgrade, type SpringComponent, type SpringType } from "./types";
 
 /**
  * THE TEST SPRINGS
@@ -8,14 +8,14 @@ import { TIER_LABEL, type Kit, type KitTier, type KitUpgrade, type SpringCompone
  * and asked to locate. The scenario is a robotics workshop, so both live in the
  * Mechatro Kit:
  *
- *   spring 1   Mechatro Kit   compression, Ø5.5 × 40 mm, wire 1.00
- *   spring 2   Mechatro Kit   extension,   Ø8.0 × 44 mm, wire 1.20, full loops
+ *   spring 1   Mechatro Kit   compression, Ø5.5 × 40 mm, wire 0.50
+ *   spring 2   Mechatro Kit   extension,   Ø8.0 × 46 mm, wire 1.20, full loops
  *
  * Near-misses the participant has to rule out by comparing, not by glancing:
  *
- *   Bike Kit       extension,   Ø8.0 × 48 mm, wire 1.00  (4 mm longer, hooks)
- *   Garage Kit     extension,   Ø7.0 × 45 mm, wire 0.90  (1 mm narrower, 1 mm longer)
- *   Mechatro Kit   compression, Ø9.0 × 43 mm, wire 2.20  (same box, much fatter)
+ *   Bike Kit       extension,   Ø8.0 × 50 mm, wire 1.00  (4 mm longer, hooks)
+ *   Garage Kit     extension,   Ø7.0 × 47 mm, wire 0.90  (1 mm narrower, 1 mm longer)
+ *   Mechatro Kit   compression, Ø5.0 × 44 mm, wire 0.90  (same box, nearly the same size)
  *
  * The spring finder's dialogue (`src/lib/search.ts`, `src/lib/dialogue.ts`) reads
  * these flags to decide what to steer towards, so it never names the kit itself.
@@ -64,13 +64,20 @@ const TORSION_SHEETS = [
 
 type KitInput = Omit<Kit, "components" | "pro"> & {
   components: SpecInput[];
-  pro: Omit<KitUpgrade, "components"> & { components: SpecInput[] };
+  pro: Omit<KitUpgrade, "components" | "priceEUR"> & { components: SpecInput[] };
 };
+
+/** Pro is priced off Basic, to the whole euro every price in the shop is shown in. */
+const PRO_PRICE_FACTOR = 1.6;
 
 const kit = (kit: KitInput): Kit => ({
   ...kit,
   components: kit.components.map(buildComponent),
-  pro: { ...kit.pro, components: kit.pro.components.map(buildComponent) },
+  pro: {
+    ...kit.pro,
+    priceEUR: Math.round(kit.priceEUR * PRO_PRICE_FACTOR),
+    components: kit.pro.components.map(buildComponent),
+  },
 });
 
 export const kits: Kit[] = [
@@ -86,7 +93,7 @@ export const kits: Kit[] = [
       "Practical box with spiral springs and other types of springs in different models and dimensions. Covers the sizes most often needed for door hardware, latches, hinges and general maintenance work.",
     inStock: true,
     deliveryDays: "1-2 days",
-    priceEUR: 89,
+    priceEUR: 18,
     compartments: 18,
     profile: {
       actions: ["pull", "push", "rotate"],
@@ -96,7 +103,6 @@ export const kits: Kit[] = [
     },
     pro: {
       partNumber: "2734646",
-      priceEUR: 139,
       compartments: 26,
       summary: "Adds the heavy end — long extension springs, thick compression sizes and disc washers for bolted joints.",
       description:
@@ -116,7 +122,7 @@ export const kits: Kit[] = [
       { type: "compression", wire: 1.4, outer: 12.0, len: 38, coils: 16, end: "Closed and ground", quantity: 8 },
       { type: "compression", wire: 2.0, outer: 16.0, len: 50, coils: 15, end: "Closed and ground", quantity: 6 },
       { type: "extension", wire: 0.7, outer: 5.5, len: 32, coils: 30, end: "Full loop both ends", quantity: 10 },
-      { type: "extension", wire: 0.9, outer: 7.0, len: 45, coils: 36, end: "Full loop both ends", quantity: 10 },
+      { type: "extension", wire: 0.9, outer: 7.0, len: 47, coils: 38, end: "Full loop both ends", quantity: 10 },
       { type: "extension", wire: 1.2, outer: 10.0, len: 70, coils: 40, end: "Machine hooks both ends", quantity: 8 },
       { type: "extension", wire: 1.6, outer: 14.0, len: 95, coils: 42, end: "Machine hooks both ends", quantity: 6 },
       { type: "torsion", wire: 1.0, outer: 9.0, len: 22, coils: 6, end: "90° straight legs", quantity: 8 },
@@ -136,8 +142,8 @@ export const kits: Kit[] = [
       "Springs for robot grippers, actuators, limit switches and other moving machine parts. Compression springs push back, extension springs pull back, and torsion springs twist back. Precisely sized and mostly stainless steel.",
     inStock: true,
     deliveryDays: "1-2 days",
-    priceEUR: 112,
-    compartments: 16,
+    priceEUR: 20,
+    compartments: 12,
     profile: {
       actions: ["push", "pull", "rotate"],
       sizes: ["small", "medium"],
@@ -146,8 +152,7 @@ export const kits: Kit[] = [
     },
     pro: {
       partNumber: "2734690",
-      priceEUR: 189,
-      compartments: 28,
+      compartments: 22,
       summary: "Adds the fine end and the strong end — sub-5 mm springs for small mechanisms, plus heavier sizes for load-bearing joints.",
       description:
         "Everything in the Basic box, with the range opened out at both ends: sub-5 mm springs fine enough for micro switches, pick-and-place fingers and printed prototypes, and heavier compression and extension sizes for joints that carry a load. Stainless throughout, with disc springs for preloading bolted actuator mounts.",
@@ -165,26 +170,32 @@ export const kits: Kit[] = [
       ],
     },
     components: [
-      // Compression — plunger returns and preload. The first is test spring 1, Ø5.5 × 40:
-      // its long, thin photograph is the one in the kit with those proportions.
-      { type: "compression", wire: 1.0, outer: 5.5, len: 40, coils: 22, end: "Closed and ground", material: "stainless", quantity: 10, target: true, photo: S("minimalist-steel-compression-spring"), drawings: COMPRESSION_SHEETS },
-      { type: "compression", wire: 1.3, outer: 6.0, len: 18, coils: 9, end: "Closed and ground", material: "stainless", quantity: 12, photo: S("polished-chrome-compression-spring"), drawings: COMPRESSION_SHEETS },
-      { type: "compression", wire: 2.2, outer: 9.0, len: 43, coils: 16, end: "Closed and ground", material: "stainless", quantity: 10, photo: S("polished-steel-compression-spring"), drawings: COMPRESSION_SHEETS },
-      { type: "compression", wire: 1.8, outer: 12.0, len: 28, coils: 8, end: "Closed and ground", material: "stainless", quantity: 12, photo: S("polished-silver-compression-spring"), drawings: COMPRESSION_SHEETS },
+      // The Basic box is the one in the opened-kit photograph, so its twelve springs are
+      // the twelve on that lid label — same sizes, same counts. Wire gauges and coil
+      // counts are estimated from the photo: compression pitch near 1.8–2.2 × wire,
+      // extension coils touching.
 
-      // Extension — gripper and linkage returns. All but the hooked Ø10 × 65 close
-      // into a full loop, which is what their photographs show. The second is test
-      // spring 2, Ø8 × 44: 25 coils of 1.2 wire sit touching, as in its photograph,
-      // over exactly the body length that 44 mm leaves after the two loops.
-      { type: "extension", wire: 0.45, outer: 6.0, len: 22, coils: 26, end: "Full loop both ends", material: "stainless", quantity: 10, photo: S("polished-diagonal-extension-spring-2"), drawings: EXTENSION_LOOP_SHEETS },
-      { type: "extension", wire: 1.2, outer: 8.0, len: 44, coils: 25, end: "Full loop both ends", material: "stainless", quantity: 10, target: true, photo: S("polished-diagonal-extension-spring"), drawings: EXTENSION_LOOP_SHEETS },
-      { type: "extension", wire: 1.2, outer: 10.0, len: 65, coils: 39, end: "Machine hooks both ends", quantity: 10, photo: S("metal-extension-spring-on-white"), drawings: EXTENSION_HOOK_SHEETS },
-      { type: "extension", wire: 1.0, outer: 14.0, len: 57, coils: 32, end: "Full loop both ends", material: "stainless", quantity: 10, photo: S("polished-stainless-steel-extension-spring"), drawings: EXTENSION_LOOP_SHEETS },
+      // Compression. The first is test spring 1, Ø5.5 × 40: its long, thin photograph
+      // is the one in the kit with those proportions.
+      { type: "compression", wire: 0.5, outer: 5.5, len: 40, coils: 22, end: "Closed and ground", material: "stainless", quantity: 10, target: true, photo: S("minimalist-steel-compression-spring"), drawings: COMPRESSION_SHEETS },
+      { type: "compression", wire: 1.0, outer: 7.0, len: 13, coils: 7, end: "Closed and ground", material: "stainless", quantity: 10, photo: S("polished-silver-compression-spring"), drawings: COMPRESSION_SHEETS },
+      { type: "compression", wire: 1.2, outer: 9.0, len: 15, coils: 6, end: "Closed and ground", material: "stainless", quantity: 12, photo: S("polished-chrome-compression-spring"), drawings: COMPRESSION_SHEETS },
+      { type: "compression", wire: 1.4, outer: 9.0, len: 19, coils: 7, end: "Closed and ground", material: "stainless", quantity: 12, photo: S("polished-stainless-steel-compression-spring-1"), drawings: COMPRESSION_SHEETS },
+      { type: "compression", wire: 0.9, outer: 5.0, len: 44, coils: 22, end: "Closed and ground", material: "stainless", quantity: 8, photo: S("polished-stainless-steel-compression-spring"), drawings: COMPRESSION_SHEETS },
 
-      // Torsion — hinge, flap and lever returns, by leg arrangement.
-      { type: "torsion", wire: 0.9, outer: 7.0, len: 18, coils: 5, end: "90° straight legs", material: "stainless", quantity: 12, photo: S("polished-l-shaped-torsion-spring"), drawings: TORSION_SHEETS },
-      { type: "torsion", wire: 1.3, outer: 11.0, len: 26, coils: 5, end: "Straight legs, tangential", material: "stainless", quantity: 12, photo: S("polished-stainless-steel-torsion-spring"), drawings: TORSION_SHEETS },
-      { type: "torsion", wire: 1.6, outer: 13.0, len: 32, coils: 3, end: "270° crossed legs", material: "stainless", quantity: 12, photo: S("polished-crossed-arm-torsion-spring"), drawings: TORSION_SHEETS },
+      // Extension, all closing into a full loop at each end. The first is test spring
+      // 2, Ø8 × 46: 26 coils of 1.2 wire sit touching, as in its photograph, over the
+      // body length that 46 mm leaves after the two loops. The Ø6 × 12 is shorter than
+      // its own coils and loops can be drawn, so its model runs a little over 12 mm.
+      { type: "extension", wire: 1.2, outer: 8.0, len: 46, coils: 26, end: "Full loop both ends", material: "stainless", quantity: 10, target: true, photo: S("polished-diagonal-extension-spring"), drawings: EXTENSION_LOOP_SHEETS },
+      { type: "extension", wire: 0.6, outer: 5.0, len: 20, coils: 18, end: "Full loop both ends", material: "stainless", quantity: 10, photo: S("polished-stainless-steel-extension-spring"), drawings: EXTENSION_LOOP_SHEETS },
+      { type: "extension", wire: 0.9, outer: 8.0, len: 28, coils: 15, end: "Full loop both ends", material: "stainless", quantity: 8, photo: S("polished-diagonal-extension-spring-2"), drawings: EXTENSION_LOOP_SHEETS },
+      { type: "extension", wire: 0.5, outer: 6.0, len: 12, coils: 10, end: "Full loop both ends", material: "stainless", quantity: 10, photo: S("polished-metal-extension-spring"), drawings: EXTENSION_LOOP_SHEETS },
+
+      // Torsion — hinge, flap and lever returns. Their second number is leg length.
+      { type: "torsion", wire: 0.8, outer: 6.0, len: 28, coils: 5, end: "90° straight legs", material: "stainless", quantity: 15, photo: S("polished-l-shaped-torsion-spring"), drawings: TORSION_SHEETS },
+      { type: "torsion", wire: 0.7, outer: 6.0, len: 13, coils: 4, end: "Straight legs, tangential", material: "stainless", quantity: 12, photo: S("polished-stainless-steel-torsion-spring"), drawings: TORSION_SHEETS },
+      { type: "torsion", wire: 1.2, outer: 11.0, len: 29, coils: 3, end: "270° crossed legs", material: "stainless", quantity: 12, photo: S("polished-crossed-arm-torsion-spring"), drawings: TORSION_SHEETS },
     ],
     // The opened box, shown straight after the lid. It is the Basic layout that is
     // photographed, so Pro — which fills more compartments — does not claim it.
@@ -205,7 +216,7 @@ export const kits: Kit[] = [
       "A compact selection of small-diameter springs for cable-operated brakes, shifters, kickstands, folding joints and quick-release levers. Predominantly stainless, for parts that live outdoors.",
     inStock: true,
     deliveryDays: "1-2 days",
-    priceEUR: 64,
+    priceEUR: 16,
     compartments: 12,
     profile: {
       actions: ["pull", "rotate"],
@@ -215,7 +226,6 @@ export const kits: Kit[] = [
     },
     pro: {
       partNumber: "2734652",
-      priceEUR: 99,
       compartments: 20,
       summary: "Adds cargo and e-bike sizes — longer cable springs, stiffer returns and a finer set for shifter detents.",
       description:
@@ -232,7 +242,7 @@ export const kits: Kit[] = [
     components: [
       { type: "extension", wire: 0.6, outer: 4.5, len: 24, coils: 26, end: "Full loop both ends", material: "stainless", quantity: 10 },
       { type: "extension", wire: 0.8, outer: 6.0, len: 38, coils: 32, end: "Machine hooks both ends", material: "stainless", quantity: 10 },
-      { type: "extension", wire: 1.0, outer: 8.0, len: 48, coils: 34, end: "Machine hooks both ends", quantity: 8 },
+      { type: "extension", wire: 1.0, outer: 8.0, len: 50, coils: 36, end: "Machine hooks both ends", quantity: 8 },
       { type: "torsion", wire: 0.8, outer: 7.0, len: 16, coils: 5, end: "90° straight legs", material: "stainless", quantity: 10 },
       { type: "torsion", wire: 1.0, outer: 8.0, len: 18, coils: 6, end: "Straight legs, tangential", material: "stainless", quantity: 10 },
       { type: "torsion", wire: 1.2, outer: 10.0, len: 20, coils: 6, end: "180° straight legs", material: "stainless", quantity: 8 },
@@ -253,7 +263,7 @@ export const kits: Kit[] = [
       "Long-travel extension springs sized for garden and outdoor equipment that cycles under load all season. Stainless and heavily zinc-plated finishes resist weather and standing moisture.",
     inStock: true,
     deliveryDays: "1-2 days",
-    priceEUR: 118,
+    priceEUR: 22,
     compartments: 8,
     profile: {
       actions: ["pull"],
@@ -263,7 +273,6 @@ export const kits: Kit[] = [
     },
     pro: {
       partNumber: "2734669",
-      priceEUR: 169,
       compartments: 16,
       summary: "Adds the long sizes for full-size frames, plus heavy compression springs for gate closers and awning arms.",
       description:
@@ -298,7 +307,7 @@ export const kits: Kit[] = [
       "Light-duty springs for furniture and fittings around the house — drawer runners, ball catches, flap stays, cabinet hinges and small push-to-open fittings. Sized for low loads and short travel indoors.",
     inStock: true,
     deliveryDays: "1-2 days",
-    priceEUR: 58,
+    priceEUR: 15,
     compartments: 15,
     profile: {
       actions: ["push", "rotate", "pull"],
@@ -308,7 +317,6 @@ export const kits: Kit[] = [
     },
     pro: {
       partNumber: "2734673",
-      priceEUR: 89,
       compartments: 24,
       summary: "Adds the very small sizes and a set of torsion springs for flaps, blinds and push-to-open fittings.",
       description:
@@ -347,7 +355,7 @@ export const kits: Kit[] = [
       "Marine assortment in stainless throughout, for hatches, lockers, cleats, shackles and rigging hardware that sits in salt spray. Includes disc springs for keeping preload on chainplate and deck-fitting bolts, and heavy die springs for winch and windlass pawls.",
     inStock: true,
     deliveryDays: "1-2 days",
-    priceEUR: 146,
+    priceEUR: 25,
     compartments: 10,
     profile: {
       actions: ["pull", "push", "rotate"],
@@ -357,7 +365,6 @@ export const kits: Kit[] = [
     },
     pro: {
       partNumber: "2734696",
-      priceEUR: 219,
       compartments: 18,
       summary: "Adds larger stainless sizes and a wider spread of disc and die springs for rigging and winch work.",
       description:
@@ -444,6 +451,24 @@ export const pieceCount = (components: SpringComponent[]) =>
 export const allComponents = kits.flatMap((k) =>
   k.components.map((component) => ({ component, kit: k })),
 );
+
+/** One spring as the shop sells it: inside one build of one kit. */
+export interface SpringListing {
+  component: SpringComponent;
+  kit: Kit;
+  /** The cheapest build that contains it — Basic, unless only Pro adds it. */
+  tier: KitTier;
+}
+
+/**
+ * Every spring of one type across the whole range, Pro-only sizes included — what
+ * the spring-type tabs list. Each spring is in exactly one kit, so nothing repeats.
+ */
+export const springsOfType = (type: SpringType): SpringListing[] =>
+  kits.flatMap((kit) => [
+    ...kit.components.filter((c) => c.type === type).map((component) => ({ component, kit, tier: "basic" as const })),
+    ...kit.pro.components.filter((c) => c.type === type).map((component) => ({ component, kit, tier: "pro" as const })),
+  ]);
 
 /** The springs participants are handed, in catalogue order. */
 export const testTargets = allComponents.filter(({ component }) => component.isTestTarget);
