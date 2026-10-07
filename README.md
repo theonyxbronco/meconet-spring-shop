@@ -29,7 +29,7 @@ scenario is a robotics workshop, so both live in the Mechatro Kit:
 
 | | Kit | Spring |
 |---|---|---|
-| **spring 1** | Mechatro Kit | compression, Ø5.5 × 40 mm, wire 0.50 |
+| **spring 1** | Mechatro Kit | compression, Ø4.5 × 38 mm, wire 0.50 |
 | **spring 2** | Mechatro Kit | extension, Ø8.0 × 46 mm, wire 1.20, full loops |
 | near-miss | Bike Kit | extension, Ø8.0 × 50 mm, wire 1.00, hooks |
 | near-miss | Garage Kit | extension, Ø7.0 × 47 mm, wire 0.90 |
@@ -69,7 +69,7 @@ version is designed around:
   thing the old questionnaire never did: an assortment covers a spread of sizes, so
   close is good enough.
 - **Someone who knows exactly what they need.** Dimensions in the opening message
-  (`Ø5.5 × 40 mm`, `8x44`, `1 x 5.5 x 40`, `4 cm long`, `ISO 10243 medium load`) are parsed
+  (`Ø4.5 × 38 mm`, `8x46`, `0.5 x 4.5 x 38`, `0.5mm coil diameter`, `4 cm long`, `ISO 10243 medium load`) are parsed
   out, the questions are skipped, and the reply is in spec terms: which assortment
   carries that exact code.
 
@@ -168,8 +168,9 @@ opened-kit photograph (`public/kit-covers/Open_Kit.png`), so its twelve springs 
 counts are the twelve on that lid label. Wire gauge and coil count were estimated from
 the photograph, and each spring was given the studio photograph closest to its
 proportions, so the generated 3D model and the photograph show a spring of the same
-shape. The two test springs, Ø5.5 × 40 and Ø8 × 46, have their length and diameter fixed
-by the physical springs. The Ø6 × 12 extension spring is shorter than its coils and two
+shape. The two test springs, Ø4.5 × 38 and Ø8 × 46, have their length and diameter fixed
+by the physical springs; the lid label calls the first one 5.5 × 40, but the shop
+follows the part, because participants hold it against the 1:1 view. The Ø6 × 12 extension spring is shorter than its coils and two
 loops can be drawn, so its model runs a little over 12 mm.
 
 Coil count is what makes a spring look tight or stretched, and it is easy to get wrong

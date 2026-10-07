@@ -8,14 +8,14 @@ import { TIER_LABEL, type Kit, type KitTier, type KitUpgrade, type SpringCompone
  * and asked to locate. The scenario is a robotics workshop, so both live in the
  * Mechatro Kit:
  *
- *   spring 1   Mechatro Kit   compression, Ø5.5 × 40 mm, wire 0.50
+ *   spring 1   Mechatro Kit   compression, Ø4.5 × 38 mm, wire 0.50
  *   spring 2   Mechatro Kit   extension,   Ø8.0 × 46 mm, wire 1.20, full loops
  *
  * Near-misses the participant has to rule out by comparing, not by glancing:
  *
  *   Bike Kit       extension,   Ø8.0 × 50 mm, wire 1.00  (4 mm longer, hooks)
  *   Garage Kit     extension,   Ø7.0 × 47 mm, wire 0.90  (1 mm narrower, 1 mm longer)
- *   Mechatro Kit   compression, Ø5.0 × 44 mm, wire 0.90  (same box, nearly the same size)
+ *   Mechatro Kit   compression, Ø5.0 × 44 mm, wire 0.90  (same box, half a mm wider, 6 mm longer)
  *
  * The spring finder's dialogue (`src/lib/search.ts`, `src/lib/dialogue.ts`) reads
  * these flags to decide what to steer towards, so it never names the kit itself.
@@ -175,9 +175,10 @@ export const kits: Kit[] = [
       // counts are estimated from the photo: compression pitch near 1.8–2.2 × wire,
       // extension coils touching.
 
-      // Compression. The first is test spring 1, Ø5.5 × 40: its long, thin photograph
-      // is the one in the kit with those proportions.
-      { type: "compression", wire: 0.5, outer: 5.5, len: 40, coils: 22, end: "Closed and ground", material: "stainless", quantity: 10, target: true, photo: S("minimalist-steel-compression-spring"), drawings: COMPRESSION_SHEETS },
+      // Compression. The first is test spring 1, Ø4.5 × 38 as measured off the physical
+      // part. The lid label calls it 5.5 × 40; the shop follows the part, because the
+      // 1:1 view is held against it. Its long, thin photograph keeps its 22 coils.
+      { type: "compression", wire: 0.5, outer: 4.5, len: 38, coils: 22, end: "Closed and ground", material: "stainless", quantity: 10, target: true, photo: S("minimalist-steel-compression-spring"), drawings: COMPRESSION_SHEETS },
       { type: "compression", wire: 1.0, outer: 7.0, len: 13, coils: 7, end: "Closed and ground", material: "stainless", quantity: 10, photo: S("polished-silver-compression-spring"), drawings: COMPRESSION_SHEETS },
       { type: "compression", wire: 1.2, outer: 9.0, len: 15, coils: 6, end: "Closed and ground", material: "stainless", quantity: 12, photo: S("polished-chrome-compression-spring"), drawings: COMPRESSION_SHEETS },
       { type: "compression", wire: 1.4, outer: 9.0, len: 19, coils: 7, end: "Closed and ground", material: "stainless", quantity: 12, photo: S("polished-stainless-steel-compression-spring-1"), drawings: COMPRESSION_SHEETS },

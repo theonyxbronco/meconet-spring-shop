@@ -23,7 +23,7 @@ import type {
  *   anchored to something you can hold against it, and the assistant teaches the
  *   terms and the measuring technique as it goes.
  *
- *   The expert. They already know it is a compression spring, Ø5.5 × 40, wire 1.0.
+ *   The expert. They already know it is a compression spring, Ø4.5 × 38, wire 0.5.
  *   For them the questions are noise: a stated dimension is the strongest signal in
  *   the engine and goes straight to the assortment that carries that exact spring.
  *
@@ -164,6 +164,19 @@ export function readDimensions(haystack: string): Dimensions {
     if (mm <= 3) found.wire = found.wire ?? mm;
     else found.diameter = found.diameter ?? mm;
   });
+  // "Coil diameter" means the wire to some people and the whole spring to others —
+  // the test task card uses it for the wire. Read it by size, as "thick" is, and
+  // before the plain "diameter" below can claim it.
+  take(
+    new RegExp(
+      String.raw`coil\s*(?:diameter|thickness|size)${LEAD}${NUMBER}|${NUMBER}${MM}\s*coil\s*(?:diameter|thickness|size)`,
+    ),
+    (m) => {
+      const mm = num(m[1] ?? m[2]);
+      if (mm <= 3) found.wire = found.wire ?? mm;
+      else found.diameter = found.diameter ?? mm;
+    },
+  );
 
   // "Ø5 x 20" names the diameter first. A bare "5 x 20" or "20 x 5" is read the way a
   // spring is shaped: the smaller number is across, the larger is along.

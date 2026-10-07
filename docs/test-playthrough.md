@@ -11,14 +11,14 @@ user brought in and choose the kit that best fits the workshop.
 
 | | Spring | What it looks like |
 |---|---|---|
-| **1** | Compression, Ø5.5 × 40 mm | Long and thin, open coils, flat ends, no hooks |
+| **1** | Compression, Ø4.5 × 38 mm, wire 0.5 mm | Long and thin, open coils, flat ends, no hooks |
 | **2** | Extension, Ø8 × 46 mm | Coils touching, a full loop at each end |
 
 **The correct answer:** the **Mechatro Kit** (part 2734689, €20). It holds both:
 
 | | Code | Spec | In the box |
 |---|---|---|---|
-| 1 | VC00500550400S | compression, Ø5.5 × 40 mm, wire 0.50, stainless | 10 pcs |
+| 1 | VC00500450380S | compression, Ø4.5 × 38 mm, wire 0.50, stainless | 10 pcs |
 | 2 | VE01200800460S | extension, Ø8 × 46 mm, wire 1.20, full loops, stainless | 10 pcs |
 
 > The springs' numbers live in `src/data/kits.ts` (the components flagged `target: true`).
@@ -54,11 +54,11 @@ most likely openings, and what happens:
 
 | They type | The finder |
 |---|---|
-| `5.5x40`, `5,5 x 40 mm`, `40mm long 5.5mm wide`, `Ø5.5×40` | Skips the questions. *"Found it: Mechatro Kit contains VC00500550400S…"* |
+| `4.5x38`, `4,5 x 38 mm`, `38mm long 4.5mm wide`, `Ø4.5×38`, `0.5mm coil diameter, 38mm length, 4.5mm diameter` | Skips the questions. *"Found it: Mechatro Kit contains VC00500450380S…"* |
 | `8x46`, `extension spring 8 x 46`, `46x8`, `Zugfeder 8x46` | Skips the questions. *"Found it: Mechatro Kit contains VE01200800460S…"* |
 | `spring for our robotics workshop`, `robot project spring` | Notes it silently (never repeats the end use back), then asks what the spring does |
 | `spring with loops at each end`, `flat ends, no hooks`, `it stretches` | Picks up pull or push, asks only what is missing |
-| `40mm`, `about 4.6 cm` | Takes it as the length; after the questions says Mechatro has one *exactly that long* and asks them to check the width |
+| `38mm`, `about 4.6 cm` | Takes it as the length; after the questions says Mechatro has one *exactly that long* and asks them to check the width |
 | `I don't know`, `hello`, gibberish | Reassures, then asks what the spring does |
 
 The questions, and the answer that is true for each spring:
@@ -66,7 +66,7 @@ The questions, and the answer that is true for each spring:
 | Question | Spring 1 (compression) | Spring 2 (extension) |
 |---|---|---|
 | What does the spring need to do? | *Push two things apart* | *Pull two things together* |
-| Roughly how long is it? | *Coin to palm width* (or type `40`) | *Coin to palm width* (or type `46`) |
+| Roughly how long is it? | *Coin to palm width* (or type `38`) | *Coin to palm width* (or type `46`) |
 | Where does the part spend its life? | *Indoors and dry* | *Indoors and dry* |
 
 The third question is skipped if they said "workshop", "lab", "classroom" or "inside".
@@ -74,7 +74,7 @@ They can click **or type** — `2`, `the second one`, `it pushes`, `it has loops
 `about 4 cm`, `inside` all work.
 
 **On track when:** the Mechatro Kit is the top card, its chip names the right spring
-(*Includes VC00500550400S · Ø5.5 × 40 mm* or *Includes VE01200800460S · Ø8 × 46 mm*),
+(*Includes VC00500450380S · Ø4.5 × 38 mm* or *Includes VE01200800460S · Ø8 × 46 mm*),
 and the chat shows **Open the Mechatro Kit at …**.
 
 ### Task 2 — Inspect
@@ -117,8 +117,8 @@ or "open the Mechatro Kit at <spring> and compare it with your spring".
 | What happens | What the finder does | Moderator |
 |---|---|---|
 | Gets the **kind** wrong (says pull for spring 1) | Ranks the wrong kind, then adds *"If your spring has flat ends and gaps between the coils… it's a different kind — tell me"* | Wait. Most notice when they look at the ends. |
-| Wrong kind but types the right size | *"There is an exact Ø5.5 × 40 mm in the Mechatro Kit, but it's a compression spring — flat ends and gaps between the coils"* | Wait. |
-| Corrects themselves (`actually it has loops`, `sorry it's 40mm`) | Re-ranks on the spot: *"Got it — updating…"* | — |
+| Wrong kind but types the right size | *"There is an exact Ø4.5 × 38 mm in the Mechatro Kit, but it's a compression spring — flat ends and gaps between the coils"* | Wait. |
+| Corrects themselves (`actually it has loops`, `sorry it's 38mm`) | Re-ranks on the spot: *"Got it — updating…"* | — |
 | Picks the wrong size band | Results lean to the wrong kits. Typing any length fixes it. | Prompt only if stuck: *"Is there anything else you can tell it about the spring?"* |
 | Says **outdoors** | Mechatro drops in the ranking (it's indoor-only), but still shows if in the top three | Note it as a finding — the scenario is a workshop |
 | Has both springs, searches the second | Typing it into the chat re-ranks to the second spring | — |
@@ -136,7 +136,7 @@ or "open the Mechatro Kit at <spring> and compare it with your spring".
   It talks about function and size only. This is deliberate (disclosure policy) — if
   participants comment on it, that's a finding, not a bug.
 - **Say "this is your spring" from one measurement.** A length alone gets *"has one
-  exactly 40 mm long — check the width"*. Only two matching dimensions get *"Found it"*.
+  exactly 38 mm long — check the width"*. Only two matching dimensions get *"Found it"*.
 
 ---
 
