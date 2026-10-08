@@ -74,11 +74,15 @@ export interface KitUpgrade {
   partNumber: string;
   priceEUR: number;
   compartments: number;
+  /** Lid artwork for the Pro box, when it has its own; otherwise the Basic lid stands in. */
+  coverImage?: string;
   /** One line on what the extra money buys, shown beside the tier buttons. */
   summary: string;
   description: string;
   /** The springs Pro adds on top of the Basic set, not the whole Pro contents. */
   components: SpringComponent[];
+  /** Basic springs the Pro box holds more of, by component id. */
+  quantities?: Record<string, number>;
 }
 
 export interface KitPhoto {

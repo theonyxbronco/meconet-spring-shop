@@ -62,23 +62,33 @@ const TORSION_SHEETS = [
   S("torsion-spring-technical-drawing"),
 ];
 
+/** `proQuantity` is how many the Pro box holds, where its compartment holds more than Basic's. */
 type KitInput = Omit<Kit, "components" | "pro"> & {
-  components: SpecInput[];
-  pro: Omit<KitUpgrade, "components" | "priceEUR"> & { components: SpecInput[] };
+  components: (SpecInput & { proQuantity?: number })[];
+  pro: Omit<KitUpgrade, "components" | "priceEUR" | "quantities"> & { components: SpecInput[] };
 };
 
 /** Pro is priced off Basic, to the whole euro every price in the shop is shown in. */
 const PRO_PRICE_FACTOR = 1.6;
 
-const kit = (kit: KitInput): Kit => ({
-  ...kit,
-  components: kit.components.map(buildComponent),
-  pro: {
-    ...kit.pro,
-    priceEUR: Math.round(kit.priceEUR * PRO_PRICE_FACTOR),
-    components: kit.pro.components.map(buildComponent),
-  },
-});
+const kit = (kit: KitInput): Kit => {
+  const components = kit.components.map(buildComponent);
+  const quantities = Object.fromEntries(
+    kit.components.flatMap((spec, index) =>
+      spec.proQuantity === undefined ? [] : [[components[index].id, spec.proQuantity]],
+    ),
+  );
+  return {
+    ...kit,
+    components,
+    pro: {
+      ...kit.pro,
+      priceEUR: Math.round(kit.priceEUR * PRO_PRICE_FACTOR),
+      components: kit.pro.components.map(buildComponent),
+      quantities,
+    },
+  };
+};
 
 export const kits: Kit[] = [
   kit({
@@ -152,21 +162,32 @@ export const kits: Kit[] = [
     },
     pro: {
       partNumber: "2734690",
-      compartments: 22,
-      summary: "Adds the fine end and the strong end — sub-5 mm springs for small mechanisms, plus heavier sizes for load-bearing joints.",
+      compartments: 24,
+      coverImage: "/kit-covers/Mechatro_Pro_Kit.png",
+      summary: "Twelve more sizes — seven compression, four extension and a torsion — filling a 24-compartment box.",
       description:
-        "Everything in the Basic box, with the range opened out at both ends: sub-5 mm springs fine enough for micro switches, pick-and-place fingers and printed prototypes, and heavier compression and extension sizes for joints that carry a load. Stainless throughout, with disc springs for preloading bolted actuator mounts.",
+        "Everything in the Basic box, plus twelve more sizes in a 24-compartment case: short and long compression springs from Ø5 to Ø8, four more extension springs with full loops, and a mid-size torsion spring. Stainless throughout.",
+      // The twelve compartments the Pro lid label adds to the Basic twelve. Two of the
+      // Basic twelve come in larger counts in Pro; see `proQuantity` below. The label
+      // calls the 6 × 20 an extension spring, but it is drawn — and photographed in
+      // its compartment — as compression, so the shop follows the part. Wire gauges
+      // and coil counts are estimated from the photo, as for Basic.
       components: [
-        { type: "compression", wire: 0.6, outer: 4.0, len: 16, coils: 14, end: "Closed and ground", material: "stainless", quantity: 14 },
-        { type: "compression", wire: 0.8, outer: 4.5, len: 25, coils: 18, end: "Closed and ground", material: "stainless", quantity: 12 },
-        { type: "compression", wire: 1.6, outer: 7.5, len: 55, coils: 24, end: "Closed and ground", material: "stainless", quantity: 8 },
-        { type: "compression", wire: 2.6, outer: 14.0, len: 60, coils: 14, end: "Closed and ground", material: "stainless", quantity: 6 },
-        { type: "extension", wire: 0.6, outer: 5.0, len: 30, coils: 34, end: "Full loop both ends", material: "stainless", quantity: 12 },
-        { type: "extension", wire: 0.9, outer: 7.0, len: 36, coils: 28, end: "Full loop both ends", material: "stainless", quantity: 10 },
-        { type: "extension", wire: 1.6, outer: 12.0, len: 80, coils: 42, end: "Machine hooks both ends", material: "stainless", quantity: 6 },
-        { type: "torsion", wire: 0.7, outer: 5.5, len: 14, coils: 6, end: "90° straight legs", material: "stainless", quantity: 14 },
-        { type: "torsion", wire: 2.0, outer: 16.0, len: 38, coils: 4, end: "180° straight legs", material: "stainless", quantity: 6 },
-        { type: "disc", wire: 0.5, outer: 12.0, len: 0.95, coils: 1, end: "Series DIN 2093 A", inner: 6.2, material: "stainless", quantity: 20, load: [120, 480] },
+        { type: "compression", wire: 0.8, outer: 5.0, len: 20, coils: 11, end: "Closed and ground", material: "stainless", quantity: 10, drawings: COMPRESSION_SHEETS },
+        { type: "compression", wire: 0.7, outer: 5.0, len: 35, coils: 22, end: "Closed and ground", material: "stainless", quantity: 10, drawings: COMPRESSION_SHEETS },
+        { type: "compression", wire: 0.8, outer: 6.0, len: 18, coils: 10, end: "Closed and ground", material: "stainless", quantity: 10, drawings: COMPRESSION_SHEETS },
+        { type: "compression", wire: 0.9, outer: 6.0, len: 19, coils: 9, end: "Closed and ground", material: "stainless", quantity: 10, drawings: COMPRESSION_SHEETS },
+        { type: "compression", wire: 0.8, outer: 6.0, len: 20, coils: 10, end: "Closed and ground", material: "stainless", quantity: 10, drawings: COMPRESSION_SHEETS },
+        { type: "compression", wire: 1.0, outer: 7.0, len: 10, coils: 5, end: "Closed and ground", material: "stainless", quantity: 10, drawings: COMPRESSION_SHEETS },
+        { type: "compression", wire: 1.1, outer: 8.0, len: 12, coils: 5, end: "Closed and ground", material: "stainless", quantity: 10, drawings: COMPRESSION_SHEETS },
+
+        // Extension, coils touching; the body is what the length leaves after two loops.
+        { type: "extension", wire: 0.6, outer: 5.0, len: 25, coils: 27, end: "Full loop both ends", material: "stainless", quantity: 10, drawings: EXTENSION_LOOP_SHEETS },
+        { type: "extension", wire: 0.7, outer: 5.5, len: 25, coils: 22, end: "Full loop both ends", material: "stainless", quantity: 10, drawings: EXTENSION_LOOP_SHEETS },
+        { type: "extension", wire: 0.9, outer: 7.0, len: 26, coils: 15, end: "Full loop both ends", material: "stainless", quantity: 10, drawings: EXTENSION_LOOP_SHEETS },
+        { type: "extension", wire: 1.0, outer: 8.0, len: 30, coils: 16, end: "Full loop both ends", material: "stainless", quantity: 10, drawings: EXTENSION_LOOP_SHEETS },
+
+        { type: "torsion", wire: 1.0, outer: 9.5, len: 22, coils: 3, end: "90° straight legs", material: "stainless", quantity: 7, drawings: TORSION_SHEETS },
       ],
     },
     components: [
@@ -182,7 +203,7 @@ export const kits: Kit[] = [
       { type: "compression", wire: 1.0, outer: 7.0, len: 13, coils: 7, end: "Closed and ground", material: "stainless", quantity: 10, photo: S("polished-silver-compression-spring"), drawings: COMPRESSION_SHEETS },
       { type: "compression", wire: 1.2, outer: 9.0, len: 15, coils: 6, end: "Closed and ground", material: "stainless", quantity: 12, photo: S("polished-chrome-compression-spring"), drawings: COMPRESSION_SHEETS },
       { type: "compression", wire: 1.4, outer: 9.0, len: 19, coils: 7, end: "Closed and ground", material: "stainless", quantity: 12, photo: S("polished-stainless-steel-compression-spring-1"), drawings: COMPRESSION_SHEETS },
-      { type: "compression", wire: 0.9, outer: 5.0, len: 44, coils: 22, end: "Closed and ground", material: "stainless", quantity: 8, photo: S("polished-stainless-steel-compression-spring"), drawings: COMPRESSION_SHEETS },
+      { type: "compression", wire: 0.9, outer: 5.0, len: 44, coils: 22, end: "Closed and ground", material: "stainless", quantity: 8, proQuantity: 10, photo: S("polished-stainless-steel-compression-spring"), drawings: COMPRESSION_SHEETS },
 
       // Extension, all closing into a full loop at each end. The first is test spring
       // 2, Ø8 × 46: 26 coils of 1.2 wire sit touching, as in its photograph, over the
@@ -190,7 +211,7 @@ export const kits: Kit[] = [
       // its own coils and loops can be drawn, so its model runs a little over 12 mm.
       { type: "extension", wire: 1.2, outer: 8.0, len: 46, coils: 26, end: "Full loop both ends", material: "stainless", quantity: 10, target: true, photo: S("polished-diagonal-extension-spring"), drawings: EXTENSION_LOOP_SHEETS },
       { type: "extension", wire: 0.6, outer: 5.0, len: 20, coils: 18, end: "Full loop both ends", material: "stainless", quantity: 10, photo: S("polished-stainless-steel-extension-spring"), drawings: EXTENSION_LOOP_SHEETS },
-      { type: "extension", wire: 0.9, outer: 8.0, len: 28, coils: 15, end: "Full loop both ends", material: "stainless", quantity: 8, photo: S("polished-diagonal-extension-spring-2"), drawings: EXTENSION_LOOP_SHEETS },
+      { type: "extension", wire: 0.9, outer: 8.0, len: 28, coils: 15, end: "Full loop both ends", material: "stainless", quantity: 8, proQuantity: 12, photo: S("polished-diagonal-extension-spring-2"), drawings: EXTENSION_LOOP_SHEETS },
       { type: "extension", wire: 0.5, outer: 6.0, len: 12, coils: 10, end: "Full loop both ends", material: "stainless", quantity: 10, photo: S("polished-metal-extension-spring"), drawings: EXTENSION_LOOP_SHEETS },
 
       // Torsion — hinge, flap and lever returns. Their second number is leg length.
@@ -198,10 +219,11 @@ export const kits: Kit[] = [
       { type: "torsion", wire: 0.7, outer: 6.0, len: 13, coils: 4, end: "Straight legs, tangential", material: "stainless", quantity: 12, photo: S("polished-stainless-steel-torsion-spring"), drawings: TORSION_SHEETS },
       { type: "torsion", wire: 1.2, outer: 11.0, len: 29, coils: 3, end: "270° crossed legs", material: "stainless", quantity: 12, photo: S("polished-crossed-arm-torsion-spring"), drawings: TORSION_SHEETS },
     ],
-    // The opened box, shown straight after the lid. It is the Basic layout that is
-    // photographed, so Pro — which fills more compartments — does not claim it.
+    // The opened box, shown straight after the lid. Each build has its own layout
+    // photographed, since Pro fills more compartments.
     galleryImages: [
-      { src: "/kit-covers/Open_Kit.png", label: "Mechatro Kit, opened", tier: "basic" },
+      { src: "/kit-covers/Open_Kit.png", label: "Mechatro Basic Kit, opened", tier: "basic" },
+      { src: "/kit-covers/Open_Kit_Pro.png", label: "Mechatro Pro Kit, opened", tier: "pro" },
     ],
   }),
 
@@ -437,7 +459,13 @@ export function kitVariant(kit: Kit, tier: KitTier): KitVariant {
     priceEUR: kit.pro.priceEUR,
     compartments: kit.pro.compartments,
     description: kit.pro.description,
-    components: [...kit.components, ...kit.pro.components],
+    components: [
+      ...kit.components.map((component) => {
+        const quantity = kit.pro.quantities?.[component.id];
+        return quantity === undefined ? component : { ...component, quantity };
+      }),
+      ...kit.pro.components,
+    ],
   };
 }
 

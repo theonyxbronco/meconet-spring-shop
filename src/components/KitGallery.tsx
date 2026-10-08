@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { KitBoxArt, KitShot } from "@/assets/brand";
+import { variantName } from "@/data/kits";
 import type { Kit, KitPhoto, KitTier } from "@/data/types";
 import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, ZoomIcon } from "./icons";
 
@@ -23,7 +24,7 @@ export function KitGallery({ kit, tier }: { kit: Kit; tier: KitTier }) {
   const shots = (kit.galleryImages ?? []).filter((photo) => !photo.tier || photo.tier === tier);
 
   const slides: Slide[] = [
-    { key: "box", label: `${kit.name} assortment box` },
+    { key: "box", label: `${variantName(kit, tier)} assortment box` },
     ...shots.map((photo) => ({ key: photo.src, label: photo.label, photo })),
   ];
 
@@ -49,7 +50,7 @@ export function KitGallery({ kit, tier }: { kit: Kit; tier: KitTier }) {
     slide.photo ? (
       <KitShot photo={slide.photo} className={className} />
     ) : (
-      <KitBoxArt kit={kit} className={className} />
+      <KitBoxArt kit={kit} tier={tier} className={className} />
     );
 
   return (

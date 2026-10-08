@@ -18,7 +18,8 @@
 import Image from "next/image";
 import { useId } from "react";
 import { springProfile } from "@/lib/springProfile";
-import type { Kit, KitPhoto, SpringComponent } from "@/data/types";
+import { variantName } from "@/data/kits";
+import type { Kit, KitPhoto, KitTier, SpringComponent } from "@/data/types";
 
 /**
  * The meconet wordmark, from `public/meconet_logo.png`. The artwork is drawn in
@@ -141,10 +142,13 @@ export function KitBoxArt({
   className = "",
   art = "cover",
   fit = "contain",
+  tier = "basic",
 }: {
   kit: Kit;
   className?: string;
   art?: "cover" | "thumbnail";
+  /** The build whose lid to show; Pro falls back to the Basic lid when it has none of its own. */
+  tier?: KitTier;
   /**
    * `contain` floats the lid on whatever is behind it, which is what a gallery
    * stage or a cart line wants. `fit="cover"` instead fills its box edge to edge,
@@ -153,11 +157,12 @@ export function KitBoxArt({
    */
   fit?: "contain" | "cover";
 }) {
+  const cover = (tier === "pro" && kit.pro.coverImage) || kit.coverImage;
   return (
     <div className={`relative ${className}`}>
       <Image
-        src={art === "thumbnail" ? kit.thumbnailImage : kit.coverImage}
-        alt={`${kit.name} assortment box`}
+        src={art === "thumbnail" ? kit.thumbnailImage : cover}
+        alt={`${tier === "pro" ? variantName(kit, tier) : kit.name} assortment box`}
         fill
         sizes={art === "thumbnail" ? "(max-width: 768px) 45vw, 300px" : "(max-width: 768px) 90vw, 420px"}
         className={
