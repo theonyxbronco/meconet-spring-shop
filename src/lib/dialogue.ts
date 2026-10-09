@@ -1,8 +1,11 @@
-import { kits } from "@/data/kits";
+import { kits, pieceCount } from "@/data/kits";
 import { SPRING_TYPE_LABEL, type Kit, type SpringAction, type SpringComponent } from "@/data/types";
 import {
   answerReply,
+  asksAboutFit,
+  mentionsBrand,
   targetsFor,
+  useCategoryOf,
   criteriaSummary,
   interpret,
   known,
@@ -34,8 +37,11 @@ import {
  * "I didn't follow that" and the next step, never a dead end. The fallback phrasing
  * rotates so a participant who keeps missing does not see the same sentence twice.
  *
- * Like `lib/search.ts`, nothing here names an end product back to the user. Kit
- * descriptions are quoted from the catalogue; the user's own project never is.
+ * Disclosure policy, shared with `lib/search.ts`: what a spring goes into is only ever
+ * spoken of as a category — a bike, a door, a truck — never a make, model or brand,
+ * and nothing promises a spring fits a particular product. Replies are templates, so
+ * the user's own words are never echoed back; brands are recognised only to be
+ * steered away from.
  */
 
 export interface ChatLink {
@@ -85,6 +91,14 @@ const typeList = (kit: Kit) => {
   const types = [...new Set(kit.components.map((component) => component.type))];
   const names = types.map((type) => SPRING_TYPE_LABEL[type].toLowerCase().replace(" spring", ""));
   return names.length === 1 ? `${names[0]} springs` : `${names.slice(0, -1).join(", ")} and ${names.at(-1)} springs`;
+};
+
+/** "5 compression, 4 extension and 3 torsion springs". */
+const typeBreakdown = (kit: Kit) => {
+  const counts = [...new Set(kit.components.map((component) => component.type))].map(
+    (type) => `${kit.components.filter((component) => component.type === type).length} ${SPRING_TYPE_LABEL[type].toLowerCase().replace(" spring", "")}`,
+  );
+  return counts.length === 1 ? `${counts[0]} springs` : `${counts.slice(0, -1).join(", ")} and ${counts.at(-1)} springs`;
 };
 
 const isQuestion = (text: string) =>
@@ -218,6 +232,23 @@ const TOPICS: Topic[] = [
       ]),
   },
   {
+    // "Will it fit my Volvo?" — the one question the finder must never answer with a
+    // yes. It speaks in categories only, and points back to the spring in hand.
+    id: "fit",
+    test: (text) => mentionsBrand(text) || asksAboutFit(text),
+    reply: (state, text) => {
+      const use = useCategoryOf(interpret(text, state.criteria));
+      // The category's intro only if this conversation has not heard it yet.
+      const intro = use && use.id !== state.criteria.use ? `${use.intro} ` : "";
+      return say(state, [
+        mentionsBrand(text)
+          ? "I can't say which makes or models a spring is made for — the same part changes between years and versions, so any answer would only be a guess."
+          : `I can't promise a spring fits one particular product — even on ${use?.label ?? "the same kind of thing"}, parts change between makes and versions.`,
+        `${intro}The reliable way is to match the spring itself — what it does, how long it is, how its ends look — and then lay yours on the life-size view to be sure.`,
+      ]);
+    },
+  },
+  {
     id: "measure",
     test: (text) =>
       has(
@@ -231,8 +262,8 @@ const TOPICS: Topic[] = [
       say(
         state,
         [
-          `The quick version: ${MEASURING_STEPS[0].term.toLowerCase()} is ${MEASURING_STEPS[0].what.toLowerCase()} ${MEASURING_STEPS[1].term} is ${MEASURING_STEPS[1].what.toLowerCase()} A 1 € coin is 23 mm across if you have nothing else to compare with.`,
-          "The full guide is open below. The length is the one that matters most — type it in when you have it.",
+          `Happy to help. The quick version: ${MEASURING_STEPS[0].term.toLowerCase()} is ${MEASURING_STEPS[0].what.toLowerCase()} ${MEASURING_STEPS[1].term} is ${MEASURING_STEPS[1].what.toLowerCase()} A 1 € coin is 23 mm across if you have nothing else to compare with.`,
+          "No ruler? Use \"Measure on screen\" under the answers — it shows a life-size ruler you can lay the spring on. The full guide is open below too. The length is the one that matters most, so type it in when you have it.",
         ],
         { openGuide: true },
       ),
@@ -275,15 +306,15 @@ const TOPICS: Topic[] = [
       const top = current(state);
       if (!top) {
         return say(state, [
-          "Once I've found a candidate, you can check it three ways on its page: lay your spring on the 1:1 view, turn the 3D model to compare the ends and coils, and read the dimensions off the drawing.",
+          "Good thinking — checking is the step most people skip. Once I've found a candidate, its page gives you three ways: lay your spring on the life-size (1:1) view, turn the 3D model to compare the ends and coils, and read the dimensions off the drawing.",
         ]);
       }
       const spring = top.spring;
       return say(state, [
         spring
-          ? `On the ${top.kit.name} page, select ${spring.code}. Then: lay your spring on the 1:1 view — it should cover it exactly, ${dims(spring)}. Turn the 3D model to compare the ends and how tightly the coils sit. The specification table lists the wire at ${spring.wireDiameter.toFixed(2)} mm.`
-          : `On the ${top.kit.name} page, select the spring that looks closest and lay yours on its 1:1 view — it should cover it exactly. The 3D model lets you compare the ends and coils.`,
-        "If it's a millimetre or two off, look at the neighbouring sizes in the same box before deciding it is the wrong kit.",
+          ? `Good thinking — it only takes a minute. The button below opens the ${top.kit.name} with ${spring.code} already selected. Then:\n1. Lay your spring on the 1:1 view. A match covers the picture exactly: ${dims(spring)}.\n2. Turn the 3D model and compare the ends — flat, hooked or looped — and how close the coils sit.\n3. If you have a ruler, the drawing and the specification table give the wire at ${spring.wireDiameter.toFixed(2)} mm.`
+          : `Good thinking — it only takes a minute. On the ${top.kit.name} page, pick the spring that looks closest and lay yours on its 1:1 view: a match covers the picture exactly. Then turn the 3D model to compare the ends and the coils.`,
+        "If it's a millimetre or two off, have a look at the neighbouring sizes in the same box before deciding it's the wrong kit — boxes hold close sizes side by side.",
       ]);
     },
   },
@@ -334,11 +365,11 @@ const TOPICS: Topic[] = [
     reply: (state) => {
       const top = current(state);
       const lines = [
-        "For people new to springs, two things make an assortment forgiving: it holds the size you need plus the sizes either side, so a guess a millimetre off still fits — and it mixes the three kinds, so they can try pushing, pulling and twisting without a second order.",
+        "Good question to ask. For people new to springs, two things make an assortment forgiving: it holds the size you need plus the sizes either side, so a guess that's a millimetre off still fits — and it mixes the different kinds, so they can try pushing, pulling and twisting without a second order.",
       ];
       if (top) {
         lines.push(
-          `The ${top.kit.name} has ${top.kit.components.length} sizes across ${typeList(top.kit)}, each with its own drawing, 3D model and 1:1 view. Its description on the page says what it is built for — worth reading against what your people actually do.`,
+          `The ${top.kit.name} has ${top.kit.components.length} sizes across ${typeList(top.kit)}, and every one has its own drawing, 3D model and life-size view, so nobody has to guess from a part number. The description on its page says what it's built for — worth reading against what your people actually do.`,
         );
       }
       return say(state, lines);
@@ -382,7 +413,7 @@ const TOPICS: Topic[] = [
       }
       const lines = subjects.map((kit) => {
         const near = nearestIn(kit, state.criteria);
-        return `${kit.name}: ${kit.shortText} ${kit.components.length} sizes across ${typeList(kit)}, €${kit.priceEUR}.${near ? ` Its closest to what you described is ${near.code}, ${dims(near)}.` : ""}`;
+        return `Here's the ${kit.name}: ${kit.shortText} It holds ${pieceCount(kit.components)} springs in ${kit.components.length} sizes — ${typeBreakdown(kit)} — for €${kit.priceEUR}, and every size has its own drawing, 3D model and life-size view.${near ? ` The closest to what you described is ${near.code}, ${dims(near)}.` : ""}`;
       });
       const focus = subjects[0];
       const near = nearestIn(focus, state.criteria);
@@ -451,6 +482,7 @@ function learned(before: Criteria, after: Criteria) {
   return {
     any: (["action", "size", "environment", "type", "length", "wire", "diameter"] as const).some(changed),
     terms: after.terms.length > before.terms.length,
+    use: after.use !== undefined && after.use !== before.use,
   };
 }
 
@@ -525,11 +557,15 @@ export function respond(raw: string, state: DialogueState): Turn {
     return say(state, ["Yes — I have that already."]);
   }
 
-  // Only an end use, nothing about the spring: noted silently, never repeated back.
-  if (change.terms) {
+  // Only an end use, nothing about the spring. A new category gets its short intro —
+  // in category terms only, never the user's own words.
+  if (change.terms || change.use) {
+    const use = change.use ? useCategoryOf(parsed) : undefined;
     return {
       ...say({ ...state, criteria: parsed }, [
-        "Noted. I match on what the spring does and how big it is rather than what it goes into, so the spring itself is the best guide.",
+        use
+          ? `${use.intro} The spring itself is still the best guide, so I'll keep matching on what it does and how big it is.`
+          : "Thanks, that helps. The spring itself is still the best guide, so I'll keep matching on what it does and how big it is.",
       ]),
       criteria: parsed,
       next: state.results.length > 0 ? "rerank" : "stay",

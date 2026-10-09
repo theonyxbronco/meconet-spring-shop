@@ -22,22 +22,21 @@ npm run dev     # http://localhost:3000
 5. **Set a quantity and add to order.** The cart badge animates and the preview opens.
 6. **Check out.** The test ends on the confirmation screen.
 
-## The test springs
+## The test spring
 
-Components flagged `target: true` are the physical springs participants are handed. The
-scenario is a robotics workshop, so both live in the Mechatro Kit:
+The component flagged `target: true` is the physical spring participants are handed.
+The scenario is a robotics workshop, so it lives in the Mechatro (Basic) Kit:
 
 | | Kit | Spring |
 |---|---|---|
-| **spring 1** | Mechatro Kit | compression, Ø4.5 × 38 mm, wire 0.50 |
-| **spring 2** | Mechatro Kit | extension, Ø8.0 × 46 mm, wire 1.20, full loops |
-| near-miss | Bike Kit | extension, Ø8.0 × 50 mm, wire 1.00, hooks |
-| near-miss | Garage Kit | extension, Ø7.0 × 47 mm, wire 0.90 |
-| in-kit | Mechatro Kit | compression, Ø5.0 × 44 mm, wire 0.90 |
+| **test spring** | Mechatro Kit | compression, Ø4.5 × 38 mm, wire 0.50 — 4th of 12 on the kit page |
+| in-kit look-alike | Mechatro Kit | compression, Ø5.0 × 44 mm, wire 0.90 — listed right after it |
 
-The near-misses are deliberate: a participant cannot pass the task on a glance at a
-thumbnail, they have to read dimensions or compare the part. The wire diameters of the
-two test springs are estimates fitted to their photographs — measure the real ones.
+It is the first compartment on the lid label, but the shop lists it fourth: the kit page
+opens on the first spring, and a participant should have to find theirs among its
+neighbours rather than land on it. Its nearest look-alike sits next to it, so they have
+to read dimensions or compare the part, not glance at a thumbnail. The wire diameter is
+an estimate fitted to the photograph — measure the real spring.
 
 To retarget the test, edit the flagged components in `src/data/kits.ts`. The product
 codes, spec tables, 2D drawings, 3D models and the finder's steering all follow.
@@ -69,7 +68,7 @@ version is designed around:
   thing the old questionnaire never did: an assortment covers a spread of sizes, so
   close is good enough.
 - **Someone who knows exactly what they need.** Dimensions in the opening message
-  (`Ø4.5 × 38 mm`, `8x46`, `0.5 x 4.5 x 38`, `0.5mm coil diameter`, `4 cm long`, `ISO 10243 medium load`) are parsed
+  (`Ø4.5 × 38 mm`, `4.5x38`, `0.5 x 4.5 x 38`, `0.5mm coil diameter`, `4 cm long`, `ISO 10243 medium load`) are parsed
   out, the questions are skipped, and the reply is in spec terms: which assortment
   carries that exact code.
 
@@ -77,7 +76,8 @@ version is designed around:
 wording only, never the ranking. The teaching content — how to tell the three spring
 types apart, and how to take the three measurements with nothing but a ruler — lives in
 `SPRING_SHAPES` and `MEASURING_STEPS`, and is reachable from the panel header at any
-point in the conversation.
+point in the conversation. The on-screen ruler (**Measure on screen**) sits directly under
+the answer buttons while a question is open, and in the header otherwise.
 
 ### After the first message
 
@@ -104,14 +104,19 @@ says the spring pulls has to correct that before the target kit can win.
 npm run check:dialogue
 ```
 
-replays ~85 scripted participant sessions, for each of the two springs — dimension formats, typos, units, vague
-descriptions, typed answers, questions, corrections, gibberish — through the same code
-the page uses, and checks each lands on the target. Add any phrase a pilot participant
+replays ~85 scripted participant sessions — dimension formats, typos, units, vague
+descriptions, the home-page starter prompts, brand names, typed answers, questions,
+corrections, gibberish — through the same code the page uses, and checks each lands on
+the target and that no reply names a brand. Add any phrase a pilot participant
 fumbles to `scripts/check-dialogue.mts`.
 
-The assistant deliberately never confirms or repeats an end product. It restates
-everything in terms of function and size, which keeps it inside what Meconet is allowed
-to disclose publicly about where its springs are used.
+The assistant talks about what a spring goes into only as a broad category — a bike, a
+door, a truck — and never as a make, model or brand, which keeps it inside what Meconet
+is allowed to disclose publicly about where its springs are used. `USE_CATEGORIES` in
+`src/lib/search.ts` holds each category's words, the brands that map onto it (recognised,
+never said), and the short intro the finder gives when the category comes up. Asked
+"will it fit my <brand>?", it says it can't vouch for makes or models and goes back to
+matching the spring itself.
 
 ## Where the numbers come from
 
@@ -168,8 +173,9 @@ opened-kit photograph (`public/kit-covers/Open_Kit.png`), so its twelve springs 
 counts are the twelve on that lid label. Wire gauge and coil count were estimated from
 the photograph, and each spring was given the studio photograph closest to its
 proportions, so the generated 3D model and the photograph show a spring of the same
-shape. The two test springs, Ø4.5 × 38 and Ø8 × 46, have their length and diameter fixed
-by the physical springs; the lid label calls the first one 5.5 × 40, but the shop
+shape. The test spring, Ø4.5 × 38, and the Ø8 × 46 extension spring (the second test spring
+in earlier rounds) have their length and diameter fixed by the physical springs; the lid
+label calls the first one 5.5 × 40, but the shop
 follows the part, because participants hold it against the 1:1 view. The Ø6 × 12 extension spring is shorter than its coils and two
 loops can be drawn, so its model runs a little over 12 mm.
 

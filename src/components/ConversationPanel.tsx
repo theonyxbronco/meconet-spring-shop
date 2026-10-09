@@ -102,15 +102,17 @@ export function ConversationPanel({
             <HelpIcon width={15} height={15} />
             How to measure
           </button>
-          {/* The companion to the guide: one explains the measurement, the other is
-              the ruler you take it with. */}
-          <button
-            onClick={() => setRulerOpen(true)}
-            className="flex items-center gap-1.5 rounded-full border border-line px-3.5 py-1.5 text-[13px] font-medium text-muted transition hover:border-brand-400 hover:text-brand-600"
-          >
-            <RulerIcon width={15} height={15} />
-            Measure on screen
-          </button>
+          {/* While a question is open the ruler sits under its answers instead, where
+              the need for a measurement actually arises. */}
+          {!question && (
+            <button
+              onClick={() => setRulerOpen(true)}
+              className="flex items-center gap-1.5 rounded-full border border-line px-3.5 py-1.5 text-[13px] font-medium text-muted transition hover:border-brand-400 hover:text-brand-600"
+            >
+              <RulerIcon width={15} height={15} />
+              Measure on screen
+            </button>
+          )}
           <button
             onClick={onReset}
             className="rounded-full border border-line px-3.5 py-1.5 text-[13px] font-medium text-muted transition hover:border-brand-400 hover:text-brand-600"
@@ -132,7 +134,7 @@ export function ConversationPanel({
             className="flex scroll-mt-24 justify-start"
           >
             <span
-              className={`max-w-[88%] rounded-2xl px-4 py-2.5 text-[14.5px] leading-relaxed ${
+              className={`max-w-[88%] whitespace-pre-line rounded-2xl px-4 py-2.5 text-[14.5px] leading-relaxed ${
                 message.role === "user"
                   ? "rounded-bl-sm bg-brand-500 text-white"
                   : "rounded-bl-sm bg-brand-50 text-ink"
@@ -191,14 +193,27 @@ export function ConversationPanel({
               </button>
             ))}
           </div>
-          {matchCount > 0 && (
+          {/* The ruler right under the answers: sessions showed people reading the
+              size question, not knowing the number, and never spotting the ruler up in
+              the header. Here it reads as one more way to answer. */}
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
             <button
-              onClick={onSkip}
-              className="mt-3 text-[13.5px] font-medium text-brand-600 hover:underline"
+              onClick={() => setRulerOpen(true)}
+              className="flex items-center gap-2 rounded-full border border-brand-400 bg-brand-50 px-4 py-2 text-[13.5px] font-semibold text-brand-600 transition hover:border-brand-500 hover:bg-brand-100"
             >
-              Skip ahead and show me {matchCount} assortment{matchCount === 1 ? "" : "s"} now
+              <RulerIcon width={16} height={16} />
+              Measure on screen
             </button>
-          )}
+            <span className="text-[12.5px] text-muted">Lay your spring on a life-size ruler</span>
+            {matchCount > 0 && (
+              <button
+                onClick={onSkip}
+                className="text-[13.5px] font-medium text-brand-600 hover:underline sm:ml-auto"
+              >
+                Skip ahead and show me {matchCount} assortment{matchCount === 1 ? "" : "s"} now
+              </button>
+            )}
+          </div>
         </div>
       )}
 

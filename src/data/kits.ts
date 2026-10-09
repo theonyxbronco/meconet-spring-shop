@@ -2,20 +2,19 @@ import { buildComponent, type SpecInput } from "./build";
 import { TIER_LABEL, type Kit, type KitTier, type KitUpgrade, type SpringComponent, type SpringType } from "./types";
 
 /**
- * THE TEST SPRINGS
+ * THE TEST SPRING
  *
- * Components flagged `target: true` are the physical springs participants are handed
- * and asked to locate. The scenario is a robotics workshop, so both live in the
- * Mechatro Kit:
+ * The component flagged `target: true` is the physical spring participants are
+ * handed and asked to locate. The scenario is a robotics workshop, so it lives in the
+ * Mechatro (Basic) Kit:
  *
- *   spring 1   Mechatro Kit   compression, Ø4.5 × 38 mm, wire 0.50
- *   spring 2   Mechatro Kit   extension,   Ø8.0 × 46 mm, wire 1.20, full loops
+ *   Mechatro Kit   compression, Ø4.5 × 38 mm, wire 0.50   (4th of 12 on the kit page)
  *
- * Near-misses the participant has to rule out by comparing, not by glancing:
+ * Near-misses the participant has to rule out by comparing, not by glancing — all in
+ * the same box, since no other kit has anything close:
  *
- *   Bike Kit       extension,   Ø8.0 × 50 mm, wire 1.00  (4 mm longer, hooks)
- *   Garage Kit     extension,   Ø7.0 × 47 mm, wire 0.90  (1 mm narrower, 1 mm longer)
- *   Mechatro Kit   compression, Ø5.0 × 44 mm, wire 0.90  (same box, half a mm wider, 6 mm longer)
+ *   Mechatro Kit   compression, Ø5.0 × 44 mm, wire 0.90  (listed right after it; half a mm wider, 6 mm longer)
+ *   Mechatro Kit   compression, Ø9.0 × 19 mm, wire 1.40  (listed right before it; same kind, far shorter)
  *
  * The spring finder's dialogue (`src/lib/search.ts`, `src/lib/dialogue.ts`) reads
  * these flags to decide what to steer towards, so it never names the kit itself.
@@ -196,20 +195,23 @@ export const kits: Kit[] = [
       // counts are estimated from the photo: compression pitch near 1.8–2.2 × wire,
       // extension coils touching.
 
-      // Compression. The first is test spring 1, Ø4.5 × 38 as measured off the physical
-      // part. The lid label calls it 5.5 × 40; the shop follows the part, because the
-      // 1:1 view is held against it. Its long, thin photograph keeps its 22 coils.
-      { type: "compression", wire: 0.5, outer: 4.5, len: 38, coils: 22, end: "Closed and ground", material: "stainless", quantity: 10, target: true, photo: S("minimalist-steel-compression-spring"), drawings: COMPRESSION_SHEETS },
+      // Compression. The test spring, Ø4.5 × 38, is the first compartment on the lid
+      // label but is listed fourth here, beside its look-alike Ø5 × 44: the kit page
+      // opens on the first spring, and a participant should have to find theirs, not
+      // land on it. It is drawn as measured off the physical part (the label calls it
+      // 5.5 × 40), because the 1:1 view is held against it. Its long, thin photograph
+      // keeps its 22 coils.
       { type: "compression", wire: 1.0, outer: 7.0, len: 13, coils: 7, end: "Closed and ground", material: "stainless", quantity: 10, photo: S("polished-silver-compression-spring"), drawings: COMPRESSION_SHEETS },
       { type: "compression", wire: 1.2, outer: 9.0, len: 15, coils: 6, end: "Closed and ground", material: "stainless", quantity: 12, photo: S("polished-chrome-compression-spring"), drawings: COMPRESSION_SHEETS },
       { type: "compression", wire: 1.4, outer: 9.0, len: 19, coils: 7, end: "Closed and ground", material: "stainless", quantity: 12, photo: S("polished-stainless-steel-compression-spring-1"), drawings: COMPRESSION_SHEETS },
+      { type: "compression", wire: 0.5, outer: 4.5, len: 38, coils: 22, end: "Closed and ground", material: "stainless", quantity: 10, target: true, photo: S("minimalist-steel-compression-spring"), drawings: COMPRESSION_SHEETS },
       { type: "compression", wire: 0.9, outer: 5.0, len: 44, coils: 22, end: "Closed and ground", material: "stainless", quantity: 8, proQuantity: 10, photo: S("polished-stainless-steel-compression-spring"), drawings: COMPRESSION_SHEETS },
 
-      // Extension, all closing into a full loop at each end. The first is test spring
-      // 2, Ø8 × 46: 26 coils of 1.2 wire sit touching, as in its photograph, over the
-      // body length that 46 mm leaves after the two loops. The Ø6 × 12 is shorter than
+      // Extension, all closing into a full loop at each end. The Ø8 × 46 was the
+      // second test spring in earlier rounds: 26 coils of 1.2 wire sit touching, as in
+      // its photograph, over the body length that 46 mm leaves after the two loops. The Ø6 × 12 is shorter than
       // its own coils and loops can be drawn, so its model runs a little over 12 mm.
-      { type: "extension", wire: 1.2, outer: 8.0, len: 46, coils: 26, end: "Full loop both ends", material: "stainless", quantity: 10, target: true, photo: S("polished-diagonal-extension-spring"), drawings: EXTENSION_LOOP_SHEETS },
+      { type: "extension", wire: 1.2, outer: 8.0, len: 46, coils: 26, end: "Full loop both ends", material: "stainless", quantity: 10, photo: S("polished-diagonal-extension-spring"), drawings: EXTENSION_LOOP_SHEETS },
       { type: "extension", wire: 0.6, outer: 5.0, len: 20, coils: 18, end: "Full loop both ends", material: "stainless", quantity: 10, photo: S("polished-stainless-steel-extension-spring"), drawings: EXTENSION_LOOP_SHEETS },
       { type: "extension", wire: 0.9, outer: 8.0, len: 28, coils: 15, end: "Full loop both ends", material: "stainless", quantity: 8, proQuantity: 12, photo: S("polished-diagonal-extension-spring-2"), drawings: EXTENSION_LOOP_SHEETS },
       { type: "extension", wire: 0.5, outer: 6.0, len: 12, coils: 10, end: "Full loop both ends", material: "stainless", quantity: 10, photo: S("polished-metal-extension-spring"), drawings: EXTENSION_LOOP_SHEETS },
@@ -499,5 +501,5 @@ export const springsOfType = (type: SpringType): SpringListing[] =>
     ...kit.pro.components.filter((c) => c.type === type).map((component) => ({ component, kit, tier: "pro" as const })),
   ]);
 
-/** The springs participants are handed, in catalogue order. */
+/** The spring participants are handed (a list, so a later round can add another). */
 export const testTargets = allComponents.filter(({ component }) => component.isTestTarget);

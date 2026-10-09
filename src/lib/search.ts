@@ -59,6 +59,10 @@ export interface Criteria {
   needsMeasuringHelp: boolean;
   /** They are replacing a spring that failed, so they have the old part to compare. */
   replacement: boolean;
+  /** What it goes into, as a category id from `USE_CATEGORIES` — never a brand. */
+  use?: string;
+  /** They named a make or model, which the finder must not repeat or vouch for. */
+  brand: boolean;
 }
 
 export const emptyCriteria = (): Criteria => ({
@@ -66,6 +70,7 @@ export const emptyCriteria = (): Criteria => ({
   fluency: "unknown",
   needsMeasuringHelp: false,
   replacement: false,
+  brand: false,
 });
 
 /** "unknown" is a real answer — the user said they don't know. It just scores nothing. */
@@ -327,9 +332,153 @@ export const UNSURE_PATTERNS = [
 
 const REPLACEMENT_PATTERNS = [
   /\b(?:broke|broken|snapped|snapped off|failed|worn out|rusted through|perished)\b/,
-  /\b(?:replace|replacement|replacing|same as|like this one|matching|identical|more of these|another one)\b/,
+  /\b(?:replace|replacement|replacing|same as|like this one|like mine|similar to mine|one like (?:this|mine)|matching|identical|more of these|another one)\b/,
   /\b(?:lost|missing)\b.*\bspring\b/,
 ];
+
+// ─── What the spring goes into ───────────────────────────────────────────────
+
+/**
+ * Disclosure policy: the finder may talk about what a spring goes into only at the
+ * level of "a bike", "a door", "a truck" — never a make, model or brand. Nobody can
+ * promise a spring fits a particular product, and naming one reads as exactly that
+ * promise.
+ *
+ * So brands are *recognised* (a "Volvo" is a car, an "Ikea" drawer is furniture) and
+ * then never said: every line below is written in category terms, and the dialogue
+ * check fails if any reply contains a brand from these tables.
+ */
+export interface UseCategory {
+  id: string;
+  /** How a reply refers to it: "a bike", "a door". */
+  label: string;
+  words: string[];
+  /** Recognised, never repeated. */
+  brands: string[];
+  /** A kit keyword the category implies, for when only a brand was named. */
+  term?: string;
+  /** Said once, when the category first comes up: what springs it typically uses. */
+  intro: string;
+}
+
+export const USE_CATEGORIES: UseCategory[] = [
+  {
+    id: "bike",
+    label: "a bike",
+    words: ["bike", "bikes", "bicycle", "bicycles", "cycle", "cycling", "e-bike", "ebike", "mtb", "mountain bike", "road bike", "scooter"],
+    brands: ["canyon", "trek", "cannondale", "shimano", "sram", "campagnolo", "brompton", "gazelle", "vanmoof", "bianchi", "pinarello", "cervelo", "orbea", "batavus", "cortina", "sparta", "stromer", "riese & muller", "riese und muller"],
+    term: "bike",
+    intro:
+      "Good one — bikes use a handful of small springs. The usual ones: return springs that pull brake and gear levers back, a spring that snaps the kickstand up, little twisting springs in folding catches, and the odd push spring in quick-release parts. A bike lives outdoors, so stainless is worth having.",
+  },
+  {
+    id: "door",
+    label: "a door",
+    words: ["door", "doors", "front door", "back door", "screen door", "door closer", "doorway"],
+    brands: [],
+    term: "door",
+    intro:
+      "Doors use springs in three places: a closer that pulls the door shut (it stretches as the door opens), the latch, where a small spring pushes the bolt back out, and sometimes the hinge itself, with a spring that twists it closed. The spring's ends tell you which one you have.",
+  },
+  {
+    id: "gate",
+    label: "a gate",
+    words: ["gate", "gates", "garden gate"],
+    brands: [],
+    term: "gate",
+    intro:
+      "Gates usually have a long spring that pulls them shut, plus a short push spring inside the latch. They're outside all year, so a rust-resistant finish matters as much as the size.",
+  },
+  {
+    id: "truck",
+    label: "a truck",
+    words: ["truck", "trucks", "lorry", "lorries", "van", "trailer", "tractor", "pickup"],
+    brands: ["scania", "daf", "iveco", "freightliner", "kenworth", "peterbilt", "mack"],
+    intro:
+      "On trucks and trailers, springs mostly do return work: pedals, catches, cab latches and tailboards. They get shaken a lot and see road salt, so a sturdy, corrosion-resistant spring is the safe choice.",
+  },
+  {
+    id: "car",
+    label: "a car",
+    words: ["car", "cars", "vehicle", "bonnet", "tailgate", "boot lid", "trunk lid"],
+    brands: ["volvo", "bmw", "audi", "volkswagen", "vw", "toyota", "ford", "tesla", "mercedes", "renault", "peugeot", "opel", "vauxhall", "skoda", "honda", "nissan", "hyundai", "kia", "fiat", "mazda", "porsche", "subaru", "citroen", "saab"],
+    term: "car",
+    intro:
+      "Cars have springs all over the small parts: pedal and throttle returns, the catches on the bonnet and fuel flap, and latches inside the doors. Most are compact, and anything under the car wants a rust-resistant finish.",
+  },
+  {
+    id: "furniture",
+    label: "furniture",
+    words: ["furniture", "drawer", "drawers", "cabinet", "cupboard", "wardrobe", "chair", "sofa", "bed", "desk", "shelf"],
+    brands: ["ikea", "hettich", "blum", "hafele"],
+    term: "furniture",
+    intro:
+      "Furniture springs are mostly small and light: push springs in catches and push-to-open fronts, little twisting springs in flaps and hinges, and short pull springs in some runners. Indoors, so the finish hardly matters.",
+  },
+  {
+    id: "appliance",
+    label: "a household appliance",
+    words: ["appliance", "appliances", "washing machine", "dishwasher", "oven", "fridge", "freezer", "toaster", "vacuum", "hoover", "dryer"],
+    brands: ["bosch", "miele", "siemens", "whirlpool", "dyson", "electrolux", "aeg", "samsung", "philips", "smeg", "beko", "zanussi"],
+    intro:
+      "Appliances use small springs in doors, catches, lids and switches — mostly push and twist springs, and the odd short pull spring. Inside a home they stay dry, so the size is what matters.",
+  },
+  {
+    id: "boat",
+    label: "a boat",
+    words: ["boat", "boats", "yacht", "sailing", "dinghy", "marine", "deck", "hatch"],
+    brands: [],
+    term: "boat",
+    intro:
+      "On a boat, springs sit in hatches, lockers, cleats and rigging hardware, all in salt spray — so stainless isn't optional there, and the size comes second.",
+  },
+  {
+    id: "garden",
+    label: "garden equipment",
+    words: ["garden", "trampoline", "lawnmower", "mower", "hedge trimmer", "wheelbarrow"],
+    brands: ["husqvarna", "stihl", "gardena", "flymo", "makita", "ryobi"],
+    term: "garden",
+    intro:
+      "Garden equipment tends to use longer, sturdier springs — mostly ones that pull — and they spend the season outside, so a weatherproof finish matters.",
+  },
+  {
+    id: "robot",
+    label: "a robotics or machine-building project",
+    words: ["robot", "robots", "robotic", "robotics", "mechatronic", "mechatronics", "gripper", "actuator", "servo", "automation", "3d printer", "cnc", "maker", "makerspace", "prototype"],
+    brands: ["arduino", "raspberry pi", "lego", "fischertechnik", "prusa", "creality", "bambu", "makeblock", "vex"],
+    term: "robotics",
+    intro:
+      "Robotics and machine projects mostly use small precision springs: push springs behind buttons, end stops and gripper fingers, pull springs that bring an arm back, and tiny twisting springs on hinged flaps. Usually indoors, usually stainless.",
+  },
+];
+
+const CATEGORY_TERMS = new Set(USE_CATEGORIES.flatMap((category) => (category.term ? [category.term] : [])));
+
+const categoryFor = (id: string | undefined) => USE_CATEGORIES.find((category) => category.id === id);
+
+/** The category a message names, by plain word or by brand. */
+function readUse(text: string): { category?: UseCategory; brand: boolean } {
+  const byBrand = USE_CATEGORIES.find((category) => category.brands.some((brand) => includesWord(text, brand)));
+  const byWord = USE_CATEGORIES.find((category) => category.words.some((word) => includesWord(text, word)));
+  return { category: byWord ?? byBrand, brand: byBrand !== undefined };
+}
+
+/** True when the text names a make or model the finder must not repeat. */
+export const mentionsBrand = (text: string) => readUse(normalise(text)).brand;
+
+/** Every brand the finder recognises, for the check that none is ever said back. */
+export const ALL_BRANDS = USE_CATEGORIES.flatMap((category) => category.brands);
+
+export const useCategoryOf = (criteria: Criteria) => categoryFor(criteria.use);
+
+/** Mentions the category alongside a question about fitting it: "will it fit my bike?" */
+export const asksAboutFit = (text: string) => {
+  const haystack = normalise(text);
+  return (
+    readUse(haystack).category !== undefined &&
+    /\b(?:fit|fits|fitting|compatible|compatibility|work (?:with|on|in)|made for|designed for|suitable for|suit)\b/.test(haystack)
+  );
+};
 
 /**
  * Kit keywords that are really just a size or an environment. They already score on
@@ -417,6 +566,13 @@ export function interpret(text: string, previous: Criteria = emptyCriteria()): C
     }
   }
 
+  const use = readUse(plain);
+  if (use.category) {
+    next.use = use.category.id;
+    if (use.category.term && !next.terms.includes(use.category.term)) next.terms.push(use.category.term);
+  }
+  if (use.brand) next.brand = true;
+
   if (HELP_PATTERNS.some((pattern) => pattern.test(haystack))) next.needsMeasuringHelp = true;
   if (REPLACEMENT_PATTERNS.some((pattern) => pattern.test(haystack))) next.replacement = true;
 
@@ -474,7 +630,7 @@ export const QUESTIONS: Question[] = [
   {
     id: "size",
     prompt: "Roughly how long is it when nothing is pulling or pressing on it?",
-    note: "No ruler needed — hold it against a coin or your hand. Or just type the length.",
+    note: "No ruler needed — hold it against a coin or your hand, or use \"Measure on screen\" below. Or just type the length.",
     options: [
       { label: "Shorter than a 1 € coin is wide", value: "small", hint: "Under about 30 mm" },
       { label: "Coin to palm width", value: "medium", hint: "About 30 to 80 mm" },
@@ -603,7 +759,9 @@ export function rankKits(criteria: Criteria): ScoredKit[] {
     }
 
     const matchedTerms = criteria.terms.filter((term) => kit.profile.keywords.includes(term));
-    score += Math.min(matchedTerms.length * 2, 6);
+    // A category ("door", "bike") says where the spring sits, not which spring — each
+    // one uses all three kinds — so it counts half what a specific part word does.
+    score += Math.min(matchedTerms.reduce((total, term) => total + (CATEGORY_TERMS.has(term) ? 1 : 2), 0), 6);
 
     const fits = (component: SpringComponent) =>
       (action ? component.action === action : true) && (criteria.type ? component.type === criteria.type : true);
@@ -703,7 +861,7 @@ export function specLine(criteria: Criteria): string | undefined {
 /** What the assistant has understood, strictly in function-and-size terms. */
 export function restate(criteria: Criteria): string {
   const summary = criteriaSummary(criteria);
-  return summary === "" ? "I can work from the shape of the part rather than what it goes into." : `So far I have: ${summary}.`;
+  return summary === "" ? "I can work from the shape of the part — no spring terms needed." : `So far I have: ${summary}.`;
 }
 
 /** The same understanding with no lead-in, for use as a heading subtitle. */
@@ -735,30 +893,33 @@ export function criteriaSummary(criteria: Criteria): string {
 }
 
 /**
- * The assistant's opening turn. The whole point of the branch: an expert gets their
- * own spec read back and nothing explained; a novice gets told that they do not need
- * the numbers, which is the thing the old questionnaire never said.
+ * The assistant's opening turn. An expert gets their own spec read back and nothing
+ * explained; a novice gets told that they do not need the numbers, which is the
+ * thing the old questionnaire never said. Either way it opens warmly and gives them
+ * something useful before the first question — the starter prompts land here, and a
+ * tap that earns only "noted" reads as the finder not listening.
  */
 export function openingReply(criteria: Criteria): string[] {
   const spec = specLine(criteria);
+  const use = useCategoryOf(criteria);
+  const brandNote = criteria.brand
+    ? "One honest note: I can't say which makes or models a spring is made for — the same part changes between years and versions, so that would only be a guess. What I can do is match the spring itself, and that's the reliable route anyway."
+    : undefined;
 
   if (criteria.needsMeasuringHelp) {
     return [
-      "That is the most common question we get, and it is a fair one — spring terms are not obvious.",
-      "I have put the whole thing below: how to tell which kind of spring you have, and how to measure it with nothing but a ruler. You can also just answer the questions instead — every spring we sell comes in an assortment that covers a spread of sizes, so getting close is enough.",
+      "Great question — and you're far from alone. Most people have never had to measure a spring, and the terms aren't obvious.",
+      "I've opened a short guide below: how to tell the three kinds of spring apart just by looking at the ends, and how to measure one with nothing but a ruler (or a coin). The good news is you may not need it at all — every spring here comes in an assortment that covers a spread of sizes, so getting close is enough. Shall we start with a quick question?",
     ];
   }
 
   if (criteria.fluency === "expert" && spec) {
     return [
-      `Noted: ${spec}. I'll match that against the assortments and tell you which one carries it.`,
-      "Everything is sold as an assortment, so the result is the kit that contains your spring — usually alongside the sizes either side of it.",
+      `Thanks — that's exactly what I need: ${spec}. Let me find the assortment that carries it.`,
+      "Everything is sold as an assortment, so you'll get the kit that contains your spring — usually with the sizes either side of it, which is handy if a part ever turns out a touch different.",
+      ...(brandNote ? [brandNote] : []),
     ];
   }
-
-  const reassurance = criteria.replacement
-    ? "Matching a spring you already have is the easiest case: keep it to hand. Every spring in the shop has a 1:1 view you can lay the real part against, so you can confirm the match without measuring it."
-    : "You don't need exact measurements. Each result is an assortment covering a spread of sizes, so close is enough.";
 
   // Nothing about the spring itself understood yet — don't pretend to summarise. Where
   // it lives is not about the spring, so on its own it does not count.
@@ -768,21 +929,30 @@ export function openingReply(criteria: Criteria): string[] {
     criteria.length !== undefined ||
     criteria.diameter !== undefined ||
     criteria.wire !== undefined;
-  if (!aboutTheSpring) {
-    return [
-      criteria.terms.length > 0
-        ? "Noted. I match on what the spring does and roughly how big it is, rather than what it goes into — and most people don't know the words for spring parts, so you don't need them here."
-        : "I did not catch much from that, which is fine. Most people don't know the words for spring parts, and you don't need them here.",
-      criteria.replacement
-        ? reassurance
-        : "If you have the spring in front of you, a couple of quick questions about it will narrow things down. You can also type at any point — a measurement, a question, anything.",
-    ];
+
+  const lines: string[] = [];
+  if (use) lines.push(use.intro);
+  else if (criteria.replacement) lines.push("Perfect — having the spring in front of you is the best starting point there is.");
+  else if (aboutTheSpring) lines.push(`Thanks, that's a good start. ${restate(criteria)}`);
+  else if (criteria.terms.length > 0) lines.push("Thanks, that helps me picture it.");
+  else lines.push("Happy to help you find it! You don't need to know any spring terms for this — plain words work fine.");
+
+  if (brandNote) lines.push(brandNote);
+  if (use && aboutTheSpring) lines.push(restate(criteria));
+  if (criteria.replacement && known(criteria.action) === undefined) {
+    lines.push(
+      "A quick tip while it's in your hand: look at the ends. Hooks or loops mean it pulls, flat ends with gaps between the coils mean it pushes, and two straight legs mean it twists. That's the first thing I'll ask.",
+    );
   }
 
-  return [
-    `${restate(criteria)} I work from what the spring does and roughly how big it is, not the product it goes into.`,
-    reassurance,
-  ];
+  lines.push(
+    criteria.replacement
+      ? "I'll ask two or three quick questions about it — no tools needed — and then show you the assortment that holds it. Every spring in the shop has a life-size view you can lay yours on, so you can confirm the match before you order."
+      : use
+        ? "To narrow it down I'll ask two or three quick questions about the spring itself — no measuring needed. You can also type at any point: a measurement, a question, anything."
+        : "A couple of quick questions will narrow it down — no measuring needed, and each result is an assortment covering a spread of sizes, so close is enough. You can also type at any point.",
+  );
+  return lines;
 }
 
 /** A short line after each answer, so the chat teaches rather than just advances. */
@@ -847,7 +1017,7 @@ export function resultReply(top: ScoredKit[], criteria: Criteria): string[] {
     const which = best.partial === "length" ? `exactly ${spring.freeLength} mm long` : `exactly Ø${spring.outerDiameter} mm across`;
     const other = best.partial === "length" ? "the width" : "the length";
     lines.push(
-      `${best.kit.name} has a ${SPRING_TYPE_LABEL[spring.type].toLowerCase()} ${which}: ${spring.code}, ${dims(spring)}, wire ${spring.wireDiameter.toFixed(2)} mm.`,
+      `Good news — the ${best.kit.name} has a ${SPRING_TYPE_LABEL[spring.type].toLowerCase()} ${which}: ${spring.code}, ${dims(spring)}, wire ${spring.wireDiameter.toFixed(2)} mm.`,
     );
     lines.push(
       `One measurement can match more than one spring, so check ${other} too: open it and lay your spring against the 1:1 view, or compare it with the 3D model. Or tell me ${other} and I'll confirm it.`,
@@ -886,8 +1056,8 @@ export function resultReply(top: ScoredKit[], criteria: Criteria): string[] {
 
   lines.push(
     top.length === 1
-      ? `One assortment fits: ${best.kit.name}, because it ${best.reasons[0] ?? "matches what you described"}.`
-      : `${top.length} assortments fit. The closest is ${best.kit.name}, because it ${best.reasons[0] ?? "matches what you described"}.`,
+      ? `Here's what I found. One assortment fits: ${best.kit.name}, because it ${best.reasons[0] ?? "matches what you described"}.`
+      : `Here's what I found. ${top.length} assortments fit, and the closest is ${best.kit.name}, because it ${best.reasons[0] ?? "matches what you described"}.`,
   );
   if (spring) {
     lines.push(
@@ -963,7 +1133,7 @@ export const MEASURING_STEPS = [
  */
 export const STARTER_PROMPTS: { text: string; kind: "describe" | "spec" }[] = [
   { text: "I want to find a spring like mine", kind: "describe" },
-  { text: "I need a door to close itself", kind: "describe" },
-  { text: "My gate latch spring broke", kind: "describe" },
+  { text: "Which spring do I need for my bike?", kind: "describe" },
+  { text: "I'm looking for a spring for a door", kind: "describe" },
   { text: "I don't know how to measure a spring", kind: "describe" },
 ];
